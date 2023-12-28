@@ -23,7 +23,7 @@ std::string make_a_cmd(const std::string &cmd,
 }
 
 void execute_a_cmd(const char *cmd) {
-  printf("Executing \"%s\">>:: \n", cmd);
+  printf("Executing [%s]\n", cmd);
   FILE *fd = popen(cmd, "r");
 
   char content[1024];
@@ -48,7 +48,7 @@ bool CMakeGenerateTask(const std::string &source_dir,
                        const std::vector<std::string> options, Task &task) {
   std::vector<std::string> args{"-S", source_dir, "-B", build_dir};
   for (auto &option : options) {
-    args.emplace_back(option);
+    args.emplace_back("-D" + option);
   }
   task = Task(make_a_cmd(CMAKE_COMMAND, args));
 
@@ -59,7 +59,7 @@ bool CMakeBuildTask(const std::string &build_dir,
                     const std::vector<std::string> options, Task &task) {
   std::vector<std::string> args{"--build", build_dir};
   for (auto &option : options) {
-    args.emplace_back(option);
+    args.emplace_back("-D" + option);
   }
   task = Task(make_a_cmd(CMAKE_COMMAND, args));
 
@@ -132,12 +132,12 @@ void Tasks::Execute() {
 }
 
 int main(int argc, char **argv) {
-  cxxopts::Options options("cake", "Simple cmake wrapper");
+  cxxopts::Options options("cake", "Make cmake simpler");
   // clang-format off
   options.add_options()
     ("c,cwd", "Current working directory", cxxopts::value<std::string>())
-    ("g,generate", "CMake Generate")
-    ("b,build", "CMake Build")
+    ("g,generate", "Generate")
+    ("b,build", "Build")
     ("o,options", "Options passed to CMake", cxxopts::value<std::vector<std::string>>())
     ("h,help", "Help");
   // clang-format on
