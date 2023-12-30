@@ -32,6 +32,8 @@ When no target selection options are given, `cake build` will build all binary a
 
 `--config` *KEY=VALUE*
 
+All options will send to generation process to cmake, using `-DKEY=VALUE`.
+
 `--help`: Prints help information.
 
 ## ENVIRONMENT

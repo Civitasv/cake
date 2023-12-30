@@ -1,6 +1,5 @@
 #include "cake.h"
 
-#include "cmake_options_mapper.h"
 #include <iostream>
 #include <ostream>
 #include <sstream>
@@ -42,10 +41,7 @@ bool CMakeGenerateTask(
 	std::function<bool()> fn = [source_directory, build_directory, options]() {
 		std::vector<std::string> args{ CMAKE_COMMAND, "-S", source_directory, "-B", build_directory };
 		for (const std::string &option : options) {
-			if (generate_options_mapper.count(option) != 0)
-			{
-				args.push_back(generate_options_mapper[option]);
-			}
+			args.push_back("-D" + option);
 		}
 		RunCmdSync(CMAKE_COMMAND, args);
 		return true;
@@ -85,19 +81,11 @@ bool CMakeBuildTask(
 	const std::string &build_directory,
 	const std::string &lib,
 	const std::string &bin,
-	const std::vector<std::string> &options,
 	Task &task
 )
 {
-	std::function<bool()> fn = [build_directory, lib, bin, options]() {
+	std::function<bool()> fn = [build_directory, lib, bin]() {
 		std::vector<std::string> args{ CMAKE_COMMAND, "--build", build_directory };
-
-		for (auto &option : options) {
-			if (build_options_mapper.count(option) != 0)
-			{
-				args.push_back(build_options_mapper[option]);
-			}
-		}
 
 		if (!lib.empty())
 		{
@@ -175,7 +163,7 @@ void CakeBuild(const BuildConfig &config)
 		tasks.AddTask(task);
 	}
 	// build task
-	if (CMakeBuildTask(config.build_directory, config.lib, config.bin, config.options, task))
+	if (CMakeBuildTask(config.build_directory, config.lib, config.bin, task))
 	{
 		tasks.AddTask(task);
 	}
@@ -205,7 +193,7 @@ void CakeRun(const BuildConfig &build_config, const RunConfig &run_config)
 		tasks.AddTask(task);
 	}
 	// build task
-	if (CMakeBuildTask(build_config.build_directory, build_config.lib, build_config.bin, build_config.options, task))
+	if (CMakeBuildTask(build_config.build_directory, build_config.lib, build_config.bin, task))
 	{
 		tasks.AddTask(task);
 	}
