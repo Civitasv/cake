@@ -15,4 +15,4 @@ build-type = "release"
 [profile]
 compiler = "g++"
 linker = "lld"
-
+compile_commands = true

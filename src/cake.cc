@@ -1,5 +1,6 @@
 #include "cake.h"
 
+#include "cmake_options_mapper.h"
 #include <iostream>
 #include <ostream>
 #include <sstream>
@@ -40,8 +41,11 @@ bool CMakeGenerateTask(
 {
 	std::function<bool()> fn = [source_directory, build_directory, options]() {
 		std::vector<std::string> args{ CMAKE_COMMAND, "-S", source_directory, "-B", build_directory };
-		for (auto &option : options) {
-			args.push_back("-D" + option);
+		for (const std::string &option : options) {
+			if (generate_options_mapper.count(option) != 0)
+			{
+				args.push_back(generate_options_mapper[option]);
+			}
 		}
 		RunCmdSync(CMAKE_COMMAND, args);
 		return true;
@@ -89,7 +93,10 @@ bool CMakeBuildTask(
 		std::vector<std::string> args{ CMAKE_COMMAND, "--build", build_directory };
 
 		for (auto &option : options) {
-			args.push_back("-D" + option);
+			if (build_options_mapper.count(option) != 0)
+			{
+				args.push_back(build_options_mapper[option]);
+			}
 		}
 
 		if (!lib.empty())

@@ -24,6 +24,7 @@ The `Cake.toml` file for each package is called its *manifest*.
     - `linker` : The linker.
     - `build-type` : The global settings of build type, will be overrided by `[[lib]]` and `[[bin]]`.
     - `linkage` : The global settings of linkage, either `static` or `shared`, will be overrided by `[[lib]]`.
+    - `compile_commands` : Whether geneate the compile commands json file.
 
 ## The manifest file for Cake itself
 
