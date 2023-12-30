@@ -16,3 +16,4 @@ build-type = "release"
 compiler = "g++"
 linker = "lld"
 compile_commands = true
+

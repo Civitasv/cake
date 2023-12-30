@@ -23,9 +23,8 @@ Including:
   - [x] [cake run](./docs/cake_run.md)
   - [ ] [cake manifest support](./docs/cake_manifest.md)
   - [ ] [cake docs](./docs/cake_docs.md)
-- [ ] Proper package management (with only compiler flags).
+- [x] Proper package management (with vcpkg, manifest mode).
 - etc.
-
 
 ## Reference
 

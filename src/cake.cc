@@ -34,12 +34,20 @@ static
 bool CMakeGenerateTask(
 	const std::string &source_directory,
 	const std::string &build_directory,
+	const std::string &vcpkg_toolchain_file,
+	const std::string &vcpkg_manifest_file,
 	const std::vector<std::string> &options,
 	Task &task
 )
 {
-	std::function<bool()> fn = [source_directory, build_directory, options]() {
-		std::vector<std::string> args{ CMAKE_COMMAND, "-S", source_directory, "-B", build_directory };
+	std::function<bool()> fn = [source_directory, build_directory, vcpkg_toolchain_file, vcpkg_manifest_file, options]() {
+		std::vector<std::string> args{
+			CMAKE_COMMAND,
+			"-S", source_directory,
+			"-B", build_directory,
+			"-DCMAKE_TOOLCHAIN_FILE=" + vcpkg_toolchain_file,
+			"-DVCPKG_MANIFEST_DIR=" + vcpkg_manifest_file,
+		};
 		for (const std::string &option : options) {
 			args.push_back("-D" + option);
 		}
@@ -153,7 +161,13 @@ void CakeBuild(const BuildConfig &config)
 		tasks.AddTask(task);
 	}
 	// generate task
-	if (CMakeGenerateTask(config.source_directory, config.build_directory, config.options, task))
+	if (CMakeGenerateTask(
+		config.source_directory,
+		config.build_directory,
+		config.vcpkg_toochain_file,
+		config.vcpkg_manifest_file,
+		config.options,
+		task))
 	{
 		tasks.AddTask(task);
 	}
@@ -183,7 +197,13 @@ void CakeRun(const BuildConfig &build_config, const RunConfig &run_config)
 		tasks.AddTask(task);
 	}
 	// generate task
-	if (CMakeGenerateTask(build_config.source_directory, build_config.build_directory, build_config.options, task))
+	if (CMakeGenerateTask(
+		build_config.source_directory,
+		build_config.build_directory,
+		build_config.vcpkg_toochain_file,
+		build_config.vcpkg_manifest_file,
+		build_config.options,
+		task))
 	{
 		tasks.AddTask(task);
 	}
