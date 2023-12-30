@@ -1,6 +1,8 @@
 #include <unistd.h>
 
 #include "common.h"
+
+#include <stdio.h>
 #include <sys/stat.h>
 
 auto logger = Logger::Create();
@@ -11,12 +13,13 @@ char **string_vector_to_char_array(const std::vector<std::string> &vec)
 	char **result = nullptr;
 	int count = vec.size();
 
-	result = new char *[count];
+	result = new char *[count + 1];
 	for (int i = 0; i < count; ++i) {
-		result[i] = new char[vec[i].length() +
-				     1]; // +1 for the null-terminator
+		result[i] = new char[vec[i].length() + 1]; // +1 for the null-terminator
 		strcpy(result[i], vec[i].c_str());
 	}
+
+	result[count] = (char *)0; //< it should be null-terminator
 
 	return result;
 }
@@ -50,6 +53,7 @@ void pid_wait(pid_t pid)
 }
 
 ////////////////////// Task /////////////////////////////////
+
 void Task::Execute()
 {
 	status = Status::kProgress;
@@ -58,7 +62,7 @@ void Task::Execute()
 	{
 		if (!the_function())
 		{
-			status = Status::kSuccess;
+			status = Status::kFail;
 			return;
 		}
 	}
@@ -104,7 +108,7 @@ bool RunCmdSync(const std::string &cmd, const std::vector<std::string> &args)
 		);
 	}
 	if (c_pid == 0) { // child process
-		if (execvp(cmd.c_str(), string_vector_to_char_array(args)) < 0) {
+		if (execvp(cmd.c_str(), string_vector_to_char_array(args)) == -1) {
 			logger->Error(
 				"Could not exec child process: ",
 				args,

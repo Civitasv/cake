@@ -1,7 +1,0 @@
-CXXFLAGS = -Wall -Wextra -std=c++17 -pedantic -ggdb
-CC = g++
-
-all: cake
-
-cake: cake.cc log.cc file_api.cc common.cc
-	$(CC) $(CXXFLAGS) -o cake cake.cc log.cc file_api.cc common.cc

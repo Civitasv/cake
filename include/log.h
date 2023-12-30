@@ -144,17 +144,17 @@ class Logger {
 	{
 		switch (l) {
 		case VERBOSE:
-			return "[Verbose]";
+			return "[CAKE][Verbose]";
 		case DEBUG:
-			return "[Debug]";
+			return "[CAKE][Debug]";
 		case INFO:
-			return "[Info]";
+			return "[CAKE][Info]";
 		case WARNING:
-			return "[Warning]";
+			return "[CAKE][Warning]";
 		case ERROR:
-			return "[Error]";
+			return "[CAKE][Error]";
 		case FATAL:
-			return "[Fatal]";
+			return "[CAKE][Fatal]";
 		default:
 			return "[Unknown]";
 		}

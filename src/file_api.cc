@@ -22,9 +22,6 @@ std::vector<std::string> FindfilesMatchPattern(const std::filesystem::path &dir,
 	for (const auto &entry : std::filesystem::directory_iterator(dir)) {
 		if (std::regex_match(entry.path().filename().string(), file_pattern)) {
 			files.push_back(entry.path().string());
-			logger->Debug("Entry Matched: ", entry);
-		} else {
-			logger->Debug("Entry Not Matched: ", entry);
 		}
 	}
 	
@@ -44,7 +41,6 @@ ReplyIndexV1 ResolveReplyIndexFile(const std::string &build_directory)
 
 	// we select the last one
 	std::string the_file = files[files.size() - 1];
-	logger->Debug("The file is: ", the_file);
 
 	return json::parse(std::ifstream(the_file));
 }
@@ -57,8 +53,6 @@ CodemodelV2 ResolveCodemodelFile(const std::string &build_directory, const Reply
 	auto reply = reply_index["reply"];
 	auto codemodel_v2 = reply["codemodel-v2"];
 	auto jsonfile = codemodel_v2["jsonFile"].template get<std::string>();
-
-	logger->Debug("The file is: ", jsonfile);
 
 	std::string dir =
 		build_directory + "/" + CMAKE_FILE_API + "/" + REPLY + "/";

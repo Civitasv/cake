@@ -1,0 +1,18 @@
+[package]
+name = "cake"
+version = "0.0.1"
+authors = "Civitasv"
+description = "Cake, CMake without a mess"
+license = "MIT"
+default-run = "cake"
+
+[[lib]]
+
+[[bin]]
+name = "cake"
+build-type = "release"
+
+[profile]
+compiler = "g++"
+linker = "lld"
+

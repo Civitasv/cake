@@ -14,6 +14,10 @@ Run a binary of the local package.
 
 ## OPTIONS
 
+### Target Selection
+
+`--bin` *name*: Run the specified binary.
+
 ## ENVIRONMENT
 
 ## EXAMPLES

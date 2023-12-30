@@ -20,6 +20,20 @@ Cake uses [cmake-file-api](https://cmake.org/cmake/help/latest/manual/cmake-file
 
 ## OPTIONS
 
+### Target Selection
+
+When no target selection options are given, `cake build` will build all binary and library targets.
+
+`--lib`: Build the specified library.
+
+`--bin`: Build the specified binary.
+
+### Common Options
+
+`--config` *KEY=VALUE*
+
+`--help`: Prints help information.
+
 ## ENVIRONMENT
 
 ## EXAMPLES

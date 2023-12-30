@@ -10,16 +10,14 @@
 #include "cxxopts.hpp"
 
 #define CMAKE_COMMAND "cmake"
-#define MAKEFILE_COMMAND "mkfile"
 
 using nlohmann::json;
 
 static MetaData meta;
 
 static
-bool QueryCodeModelTask(const BuildConfig &config, Task &task)
+bool QueryCodeModelTask(const std::string &build_directory, Task &task)
 {
-	std::string build_directory = config.build_directory;
 	std::function<bool()> fn = [build_directory]() {
 		if (MakeQueryCodeModelFile(build_directory)) {
 			return true;
@@ -33,16 +31,17 @@ bool QueryCodeModelTask(const BuildConfig &config, Task &task)
 }
 
 static
-bool CMakeGenerateTask(const BuildConfig &config, Task &task)
+bool CMakeGenerateTask(
+	const std::string &source_directory,
+	const std::string &build_directory,
+	const std::vector<std::string> &options,
+	Task &task
+)
 {
-	std::string source_directory = config.source_directory;
-	std::string build_directory = config.build_directory;
-	std::vector<std::string> options = config.options;
-
 	std::function<bool()> fn = [source_directory, build_directory, options]() {
 		std::vector<std::string> args{ CMAKE_COMMAND, "-S", source_directory, "-B", build_directory };
 		for (auto &option : options) {
-			args.emplace_back("-D" + option);
+			args.push_back("-D" + option);
 		}
 		RunCmdSync(CMAKE_COMMAND, args);
 		return true;
@@ -53,10 +52,8 @@ bool CMakeGenerateTask(const BuildConfig &config, Task &task)
 }
 
 static
-bool CMakeResolveMetaDataTask(const BuildConfig &config, Task &task)
+bool CMakeResolveMetaDataTask(const std::string &build_directory, Task &task)
 {
-	std::string build_directory = config.build_directory;
-
 	std::function<bool()> fn = [build_directory]() ->bool {
 		ReplyIndexV1 reply_index = ResolveReplyIndexFile(build_directory);
 		CodemodelV2 codemodel_v2 = ResolveCodemodelFile(build_directory, reply_index);
@@ -66,7 +63,7 @@ bool CMakeResolveMetaDataTask(const BuildConfig &config, Task &task)
 			Target target = ResolveTargetFile(build_directory, target_json_file);
 			meta.libs[target["name"]] = target;
 
-			if (target["name"] == "EXECUTABLE")
+			if (target["type"] == "EXECUTABLE")
 			{
 				meta.bins[target["name"]] = target;
 			}
@@ -80,15 +77,20 @@ bool CMakeResolveMetaDataTask(const BuildConfig &config, Task &task)
 }
 
 static
-bool CMakeBuildTask(const BuildConfig &config, Task &task)
+bool CMakeBuildTask(
+	const std::string &build_directory,
+	const std::string &lib,
+	const std::string &bin,
+	const std::vector<std::string> &options,
+	Task &task
+)
 {
-	std::string build_directory = config.build_directory;
-	std::string lib = config.lib;
-	std::string bin = config.bin;
-	std::vector<std::string> options = config.options;
-
 	std::function<bool()> fn = [build_directory, lib, bin, options]() {
 		std::vector<std::string> args{ CMAKE_COMMAND, "--build", build_directory };
+
+		for (auto &option : options) {
+			args.push_back("-D" + option);
+		}
 
 		if (!lib.empty())
 		{
@@ -101,7 +103,7 @@ bool CMakeBuildTask(const BuildConfig &config, Task &task)
 			args.push_back(lib);
 		} else if (!bin.empty())
 		{
-			if (meta.libs.count(bin) == 0)
+			if (meta.bins.count(bin) == 0)
 			{
 				logger->Error(bin, " is not avaliable, the avaliable binaries are: [", meta.Bins(), "]");
 				return false;
@@ -113,11 +115,7 @@ bool CMakeBuildTask(const BuildConfig &config, Task &task)
 			args.push_back("--target");
 			args.push_back("all");
 		}
-
-		for (auto &option : options) {
-			args.emplace_back("-D" + option);
-		}
-
+		
 		RunCmdSync(CMAKE_COMMAND, args);
 
 		return true;
@@ -128,6 +126,26 @@ bool CMakeBuildTask(const BuildConfig &config, Task &task)
 	return true;
 }
 
+static
+bool RunTargetTask(const std::string &build_directory, const std::string &bin, Task &task)
+{
+	std::function<bool()> fn = [build_directory, bin]() {
+		if (meta.bins.count(bin) == 0)
+		{
+			logger->Error(bin, " is not avaliable, the avaliable binaries are: [", meta.Bins(), "]");
+			return false;
+		}
+		std::string binpath = build_directory + "/" + meta.bins[bin]["artifacts"][0]["path"].template get<std::string>();
+		
+		std::vector<std::string> args{ binpath };
+		RunCmdSync(binpath, args);
+		return true;
+	};
+
+	task = Task(fn);
+	return true;
+}
+
 void CakeBuild(const BuildConfig &config)
 {
 	std::stringstream cmd;
@@ -135,28 +153,64 @@ void CakeBuild(const BuildConfig &config)
 
 	Task task;
 	// generate query files
-	if (QueryCodeModelTask(config, task))
+	if (QueryCodeModelTask(config.build_directory, task))
 	{
 		tasks.AddTask(task);
 	}
 	// generate task
-	if (CMakeGenerateTask(config, task))
+	if (CMakeGenerateTask(config.source_directory, config.build_directory, config.options, task))
 	{
 		tasks.AddTask(task);
 	}
 	// metadata
-	if (CMakeResolveMetaDataTask(config, task))
+	if (CMakeResolveMetaDataTask(config.build_directory, task))
 	{
 		tasks.AddTask(task);
 	}
 	// build task
-	if (CMakeBuildTask(config, task))
+	if (CMakeBuildTask(config.build_directory, config.lib, config.bin, config.options, task))
 	{
 		tasks.AddTask(task);
 	}
 
 	tasks.Execute();
 }
+
+void CakeRun(const BuildConfig &build_config, const RunConfig &run_config)
+{
+	std::stringstream cmd;
+	Tasks tasks;
+
+	Task task;
+	// generate query files
+	if (QueryCodeModelTask(build_config.build_directory, task))
+	{
+		tasks.AddTask(task);
+	}
+	// generate task
+	if (CMakeGenerateTask(build_config.source_directory, build_config.build_directory, build_config.options, task))
+	{
+		tasks.AddTask(task);
+	}
+	// metadata
+	if (CMakeResolveMetaDataTask(build_config.build_directory, task))
+	{
+		tasks.AddTask(task);
+	}
+	// build task
+	if (CMakeBuildTask(build_config.build_directory, build_config.lib, build_config.bin, build_config.options, task))
+	{
+		tasks.AddTask(task);
+	}
+	// run task
+	if (RunTargetTask(build_config.build_directory, run_config.bin, task))
+	{
+		tasks.AddTask(task);
+	}
+
+	tasks.Execute();
+}
+
 
 int main(int argc, char **argv)
 {
@@ -201,7 +255,31 @@ int main(int argc, char **argv)
 		}
 
 		CakeBuild(config);
-	} else if (strcmp(mode, "run")) {
+	} else if (strcmp(mode, "run") == 0) {
+		cxxopts::Options options(
+			"cake run",
+			"Run a binary of the local package.");
+		// clang-format off
+		options.add_options()
+		// target selection options
+		("bin", "Run the specified binary", cxxopts::value<std::string>())
+		("help", "Help");
+		// clang-format on
+
+		auto parse_result = options.parse(argc - 1, argv + 1);
+
+		BuildConfig build_config;
+		RunConfig run_config;
+		if (parse_result.count("help")) {
+			std::cout << options.help() << std::endl;
+			return 0;
+		}
+		if (parse_result.count("bin")) {
+			run_config.bin = std::move(parse_result["bin"].as<std::string>());
+			build_config.bin = std::move(parse_result["bin"].as<std::string>()); 
+		}
+
+		CakeRun(build_config, run_config);
 	}
 
 	return 0;

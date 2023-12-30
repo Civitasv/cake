@@ -15,9 +15,14 @@
 struct BuildConfig {
 	std::string source_directory = "."; ///< current working directory
 	std::string build_directory = "out"; ///< where do you want to store the build files
-	std::string lib;
-	std::string bin;
-	std::vector<std::string> options;
+	std::string lib; ///< which library to build.
+	std::string bin; ///< which binary to build.
+	std::vector<std::string> options; /// build options passed to cake(actually cmake).
+};
+
+struct RunConfig {
+	std::string bin; ///< which binary to run.
+	std::vector<std::string> options; /// run options passed to the binary.
 };
 
 struct MetaData {
