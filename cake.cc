@@ -1,204 +1,161 @@
 #include "cake.h"
 
-#include <cerrno>
-#include <cstdio>
-#include <cstring>
 #include <iostream>
 #include <ostream>
 #include <sstream>
-#include <sys/_types/_pid_t.h>
-#include <unistd.h>
 #include <vector>
-#include "log.h"
 #include "file_api.h"
+#include "common.h"
 
 #include "cxxopts.hpp"
 
 #define CMAKE_COMMAND "cmake"
+#define MAKEFILE_COMMAND "mkfile"
 
-namespace
+using nlohmann::json;
+
+static MetaData meta;
+
+static
+bool QueryCodeModelTask(const BuildConfig &config, Task &task)
 {
-auto logger = Logger::Create();
-
-char **string_vector_to_char_array(const std::vector<std::string> &vec)
-{
-	char **result = nullptr;
-	int count = vec.size();
-
-	result = new char *[count];
-	for (int i = 0; i < count; ++i) {
-		result[i] = new char[vec[i].length() +
-				     1]; // +1 for the null-terminator
-		strcpy(result[i], vec[i].c_str());
-	}
-
-	return result;
-}
-
-// copied from https://github.com/tsoding/nobuild/blob/a2924b01373220bf0656b86e3dac21638df08c85/nobuild.h#L647
-void pid_wait(pid_t pid)
-{
-	for (;;) {
-		int wstatus = 0;
-		if (waitpid(pid, &wstatus, 0) < 0) {
-			logger->Error("could not wait on command (pid ", pid,
-				      "): ", strerror(errno));
+	std::string build_directory = config.build_directory;
+	std::function<bool()> fn = [build_directory]() {
+		if (MakeQueryCodeModelFile(build_directory)) {
+			return true;
 		}
-
-		if (WIFEXITED(wstatus)) {
-			int exit_status = WEXITSTATUS(wstatus);
-			if (exit_status != 0) {
-				logger->Error("command exited with exit code ",
-					      exit_status);
-			}
-
-			break;
-		}
-
-		if (WIFSIGNALED(wstatus)) {
-			logger->Error("command process was terminated by ",
-				      strsignal(WTERMSIG(wstatus)));
-		}
-	}
-}
-} // namespace
-
-bool ChangeCwdTask(const std::string &cwd, Task &task)
-{
-	if (cwd == ".") {
 		return false;
-	}
+	};
 
-	task = Task("cd", { "cd", cwd });
+	task = Task(fn);
 
 	return true;
 }
 
-bool QueryCodeModelTask(const std::string &build_directory, Task &task)
+static
+bool CMakeGenerateTask(const BuildConfig &config, Task &task)
 {
-	QueryCodeModel(build_directory);
+	std::string source_directory = config.source_directory;
+	std::string build_directory = config.build_directory;
+	std::vector<std::string> options = config.options;
+
+	std::function<bool()> fn = [source_directory, build_directory, options]() {
+		std::vector<std::string> args{ CMAKE_COMMAND, "-S", source_directory, "-B", build_directory };
+		for (auto &option : options) {
+			args.emplace_back("-D" + option);
+		}
+		RunCmdSync(CMAKE_COMMAND, args);
+		return true;
+	};
+	task = Task(fn);
 
 	return true;
 }
 
-bool CMakeGenerateTask(const std::string &source_dir,
-		       const std::string &build_dir,
-		       const std::vector<std::string> options, Task &task)
+static
+bool CMakeResolveMetaDataTask(const BuildConfig &config, Task &task)
 {
-	std::vector<std::string> args{ CMAKE_COMMAND, "-S", source_dir, "-B",
-				       build_dir };
-	for (auto &option : options) {
-		args.emplace_back("-D" + option);
-	}
-	task = Task(CMAKE_COMMAND, args);
+	std::string build_directory = config.build_directory;
 
+	std::function<bool()> fn = [build_directory]() ->bool {
+		ReplyIndexV1 reply_index = ResolveReplyIndexFile(build_directory);
+		CodemodelV2 codemodel_v2 = ResolveCodemodelFile(build_directory, reply_index);
+		json targets = codemodel_v2["configurations"][0]["targets"];
+		for (json::iterator it = targets.begin(); it != targets.end(); ++it) {
+			std::string target_json_file = (*it)["jsonFile"].template get<std::string>();
+			Target target = ResolveTargetFile(build_directory, target_json_file);
+			meta.libs[target["name"]] = target;
+
+			if (target["name"] == "EXECUTABLE")
+			{
+				meta.bins[target["name"]] = target;
+			}
+		}
+
+		return true;
+	};
+	
+	task = Task(fn);
 	return true;
 }
 
-bool CMakeBuildTask(const std::string &build_dir,
-		    const std::vector<std::string> options, Task &task)
+static
+bool CMakeBuildTask(const BuildConfig &config, Task &task)
 {
-	std::vector<std::string> args{ CMAKE_COMMAND, "--build", build_dir };
-	for (auto &option : options) {
-		args.emplace_back("-D" + option);
-	}
-	task = Task(CMAKE_COMMAND, args);
+	std::string build_directory = config.build_directory;
+	std::string lib = config.lib;
+	std::string bin = config.bin;
+	std::vector<std::string> options = config.options;
+
+	std::function<bool()> fn = [build_directory, lib, bin, options]() {
+		std::vector<std::string> args{ CMAKE_COMMAND, "--build", build_directory };
+
+		if (!lib.empty())
+		{
+			if (meta.libs.count(lib) == 0)
+			{
+				logger->Error(lib, " is not avaliable, the avaliable libs are: [", meta.Libs(), "]");
+				return false;
+			}
+			args.push_back("--target");
+			args.push_back(lib);
+		} else if (!bin.empty())
+		{
+			if (meta.libs.count(bin) == 0)
+			{
+				logger->Error(bin, " is not avaliable, the avaliable binaries are: [", meta.Bins(), "]");
+				return false;
+			}
+			args.push_back("--target");
+			args.push_back(bin);
+		} else
+		{
+			args.push_back("--target");
+			args.push_back("all");
+		}
+
+		for (auto &option : options) {
+			args.emplace_back("-D" + option);
+		}
+
+		RunCmdSync(CMAKE_COMMAND, args);
+
+		return true;
+	};
+
+	task = Task(fn);
 
 	return true;
 }
 
-void CMakeGenerate(const ExecutorConfig &config)
+void CakeBuild(const BuildConfig &config)
 {
 	std::stringstream cmd;
 	Tasks tasks;
 
 	Task task;
-	// cwd task
-	if (ChangeCwdTask(config.source_directory, task)) {
-		tasks.AddTask(task);
-	}
 	// generate query files
-	if (QueryCodeModelTask(config.build_directory, task)) {
+	if (QueryCodeModelTask(config, task))
+	{
 		tasks.AddTask(task);
 	}
 	// generate task
-	if (CMakeGenerateTask(config.source_directory, config.build_directory,
-			      config.options, task)) {
+	if (CMakeGenerateTask(config, task))
+	{
 		tasks.AddTask(task);
 	}
-
-	tasks.Execute();
-}
-
-void CakeBuild(const ExecutorConfig &config)
-{
-	std::stringstream cmd;
-	Tasks tasks;
-
-	Task task;
-	// cwd task
-	if (ChangeCwdTask(config.source_directory, task)) {
+	// metadata
+	if (CMakeResolveMetaDataTask(config, task))
+	{
 		tasks.AddTask(task);
 	}
 	// build task
-	if (CMakeBuildTask(config.build_directory, config.options, task)) {
+	if (CMakeBuildTask(config, task))
+	{
 		tasks.AddTask(task);
 	}
 
 	tasks.Execute();
-}
-
-void Task::Execute()
-{
-	status = kProgress;
-
-	logger->Debug("Executing ", '"', args, '"');
-
-	// fork a new process and execute it
-	pid_t c_pid = fork();
-	if (c_pid < 0) {
-		logger->Error("Could not fork a child process: ", cmd, " ",
-			      args, " ", " -> ", strerror(errno));
-	}
-	if (c_pid == 0) { // child process
-		if (execvp(cmd.c_str(), string_vector_to_char_array(args)) <
-		    0) {
-			logger->Error("Could not exec child process: ", cmd,
-				      " ", args, " ||| ", strerror(errno));
-		}
-	}
-
-	// wating for child process
-	pid_wait(c_pid);
-
-	status = kSuccess;
-}
-
-std::ostream &operator<<(std::ostream &os, const Tasks &tasks)
-{
-	os << "Printing all tasks >>> " << std::endl;
-	for (auto &task : tasks.tasks) {
-		os << '\t' << task.cmd << '\n';
-	}
-	return os;
-}
-
-void Tasks::AddTask(const Task &task)
-{
-	tasks.push_back(task);
-}
-
-void Tasks::Execute()
-{
-	status = kProgress;
-	for (Task &task : tasks) {
-		task.Execute();
-		if (task.status != kSuccess) {
-			status = kFail;
-			return;
-		}
-	}
-	status = kSuccess;
 }
 
 int main(int argc, char **argv)
@@ -228,26 +185,21 @@ int main(int argc, char **argv)
 
 		auto parse_result = options.parse(argc - 1, argv + 1);
 
-		ExecutorConfig config;
+		BuildConfig config;
 		if (parse_result.count("help")) {
 			std::cout << options.help() << std::endl;
 			return 0;
 		}
 		if (parse_result.count("config")) {
-			config.options = std::move(
-				parse_result["config"]
-					.as<std::vector<std::string> >());
+			config.options = std::move(parse_result["config"].as<std::vector<std::string>>());
 		}
 		if (parse_result.count("lib")) {
-			config.lib = std::move(
-				parse_result["lib"].as<std::string>());
+			config.lib = std::move(parse_result["lib"].as<std::string>());
 		}
 		if (parse_result.count("bin")) {
-			config.bin = std::move(
-				parse_result["bin"].as<std::string>());
+			config.bin = std::move(parse_result["bin"].as<std::string>());
 		}
 
-		CMakeGenerate(config);
 		CakeBuild(config);
 	} else if (strcmp(mode, "run")) {
 	}

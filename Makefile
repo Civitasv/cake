@@ -3,5 +3,5 @@ CC = g++
 
 all: cake
 
-cake: cake.cc
-	$(CC) $(CXXFLAGS) -o cake cake.cc log.cc
+cake: cake.cc log.cc file_api.cc common.cc
+	$(CC) $(CXXFLAGS) -o cake cake.cc log.cc file_api.cc common.cc
