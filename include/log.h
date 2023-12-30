@@ -10,11 +10,15 @@
 #include <sstream>
 #include <string>
 
+#include "term/color.h"
+#include "term/style.h"
+#include "term/text.h"
+
 #define BIT(n) 1 << n
 
 std::ostream &operator<<(std::ostream &os, const std::vector<std::string> &args);
 class Logger {
-    public:
+public:
 	enum Level {
 		VERBOSE = BIT(0),
 		DEBUG = BIT(1),
@@ -25,22 +29,18 @@ class Logger {
 		NO_LOG = BIT(6)
 	};
 
-    public:
+public:
 	Logger()
 		: mask_(0xFFFFFFFF)
 	{
-		logfile_ = stdout;
 	}
 	Logger(const std::string &logpath)
 		: mask_(0xFFFFFFFF)
 	{
-		logfile_ = fopen(logpath.c_str(), "w");
 	}
 
 	~Logger()
 	{
-		if (logfile_ != stdout)
-			fclose(logfile_);
 	}
 
 	/**
@@ -96,25 +96,13 @@ class Logger {
 		Log(FATAL, msg...);
 	}
 
-	template <typename T>
-	friend std::shared_ptr<Logger>
-	operator<<(std::shared_ptr<Logger> logger, const T &data)
-	{
-		std::stringstream ss;
-		logger->Helper(ss, data);
-
-		fprintf(logger->logfile_, "%s", ss.str().c_str());
-
-		return logger;
-	}
-
-    public:
+public:
 	void set_mask(uint32_t mask)
 	{
 		mask_ = mask;
 	}
 
-    private:
+private:
 	template <typename T0, typename... T>
 	void Helper(std::stringstream &ss, const T0 &t0, const T &...msg)
 	{
@@ -128,18 +116,18 @@ class Logger {
 		bool check = ((l & mask_) != 0);
 		if (check) {
 			std::lock_guard<std::mutex> lk(mt_);
-			auto level = LevelToString(l);
+			std::string level = LevelToString(l);
 
-			std::stringstream ss;
-			Helper(ss, msg...);
-
-			fprintf(logfile_, "%s ", level.c_str());
-			fprintf(logfile_, "%s", ss.str().c_str());
-			fprintf(logfile_, "\n");
+			std::stringstream messages;
+			Helper(messages, msg...);
+			
+			Text text(level + " " + messages.str(), LevelToStyle(l));
+			
+			std::cout << text << std::endl;
 		}
 	}
 
-    private:
+private:
 	std::string LevelToString(Level l)
 	{
 		switch (l) {
@@ -160,8 +148,39 @@ class Logger {
 		}
 	}
 
-    private:
-	FILE *logfile_;
+	Style LevelToStyle(Level l)
+	{
+		Style style;
+		switch (l) {
+		case VERBOSE:
+			style.fg(Foreground::From(Color::GREEN));
+			break;
+		case DEBUG:
+			style.fg(Foreground::From(RGB(255, 144, 188)));
+			break;
+		case INFO:
+			style.fg(Foreground::From(Color::YELLOW));
+			break;
+		case WARNING:
+			style.fg(Foreground::From(Color::YELLOW)).AddDecoration(Decoration::From(Decoration::BOLD));
+			break;
+		case ERROR:
+			style.fg(Foreground::From(Color::RED)).AddDecoration(Decoration::From(Decoration::BOLD));
+			break;
+		case FATAL:
+			style.fg(Foreground::From(Color::RED)).AddDecoration(Decoration::From(Decoration::BOLD));
+			break;
+		default:
+			style.fg(Foreground::From(Color::GREEN));
+			break;
+		}
+
+		return style;
+	}
+
+
+
+private:
 	std::mutex mt_;
 
 	uint32_t mask_; //< 用于更细粒度的控制输出级别
