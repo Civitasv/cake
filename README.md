@@ -2,6 +2,8 @@
 
 > Still exploring the possiblities...
 
+[![asciicast](https://asciinema.org/a/0CtIOkmDnP5f6w7cS2x0K6cqO.svg)](https://asciinema.org/a/0CtIOkmDnP5f6w7cS2x0K6cqO)
+
 Bring C++ the power of *Cargo*.
 
 The goal of **Cake** is to provide a toolchain for C/C++ developement.
@@ -16,3 +18,8 @@ Including:
 - [ ] Proper project initialization (with CppStarter).
 - etc.
 
+
+## Reference
+
+- [json](https://github.com/nlohmann/json) : for json parser.
+- [cxxopts](https://github.com/jarro2783/cxxopts) : for command line options parser.

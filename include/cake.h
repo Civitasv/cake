@@ -1,10 +1,7 @@
 #ifndef CAKE_H_
 #define CAKE_H_
 
-#include <ostream>
-#include <sstream>
 #include <string>
-#include <set>
 #include <unordered_map>
 #include <vector>
 

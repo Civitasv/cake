@@ -1,9 +1,6 @@
 #ifndef CAKE_LOG_H_
 #define CAKE_LOG_H_
 
-#include <algorithm>
-#include <cstdio>
-#include <fstream>
 #include <memory>
 #include <mutex>
 #include <ostream>

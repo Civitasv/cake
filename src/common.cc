@@ -2,6 +2,7 @@
 
 #include "common.h"
 
+#include <fstream>
 #include <stdio.h>
 #include <sys/stat.h>
 
