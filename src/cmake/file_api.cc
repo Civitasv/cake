@@ -1,8 +1,8 @@
 #include <fstream>
 #include <regex>
 
-#include "common.h"
-#include "file_api.h"
+#include "utility/common.h"
+#include "cmake/file_api.h"
 
 bool MakeQueryCodeModelFile(const std::string &build_directory)
 {

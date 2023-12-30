@@ -4,7 +4,7 @@
 #include <functional>
 #include <string>
 
-#include "log.h"
+#include "log/log.h"
 
 extern std::shared_ptr<Logger> logger;
 

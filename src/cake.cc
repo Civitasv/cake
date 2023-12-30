@@ -4,10 +4,10 @@
 #include <ostream>
 #include <sstream>
 #include <vector>
-#include "file_api.h"
-#include "common.h"
+#include "cmake/file_api.h"
+#include "utility/common.h"
 
-#include "cxxopts.hpp"
+#include "utility/cxxopts.hpp"
 
 #define CMAKE_COMMAND "cmake"
 

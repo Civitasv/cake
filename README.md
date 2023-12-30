@@ -4,9 +4,17 @@
 
 [![asciicast](https://asciinema.org/a/0CtIOkmDnP5f6w7cS2x0K6cqO.svg)](https://asciinema.org/a/0CtIOkmDnP5f6w7cS2x0K6cqO)
 
-Bring C++ the power of *Cargo*.
+Bring C++ the power of *Cargo*, based on *CMake*.
 
-The goal of **Cake** is to provide a toolchain for C/C++ developement.
+## Goals
+
+- Make build system of C/C++ acceptable.
+- Make package management of C/C++ easier.
+
+## Non goals
+
+- Replace cmake.
+- Performance.
 
 Including:
 
@@ -14,8 +22,8 @@ Including:
   - [x] [cake build](./docs/cake_build.md)
   - [x] [cake run](./docs/cake_run.md)
   - [ ] [cake manifest support](./docs/cake_manifest.md)
-- [ ] Proper package installation (with vcpkg).
-- [ ] Proper project initialization (with CppStarter).
+  - [ ] [cake docs](./docs/cake_docs.md)
+- [ ] Proper package management (with only compiler flags).
 - etc.
 
 
