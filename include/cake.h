@@ -34,6 +34,14 @@ struct InstallConfig {
 	std::string vcpkg_packages_directory = "./packages/vcpkg_packages"; ///< vcpkg manifest file
 };
 
+struct CreateConfig {
+	std::string type; ///< which template to create.
+	std::vector<std::string> options; /// create options passed to the cake.
+	
+	std::string template_basic_directory = "./template/basic";
+	std::string template_vcpkg_directory = "./template/vcpkg";
+};
+
 struct MetaData {
 	std::vector<std::string> Libs()
 	{

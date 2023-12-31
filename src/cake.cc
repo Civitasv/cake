@@ -172,6 +172,21 @@ bool VcpkgInstallLibraryTask(const std::string &port, bool sync, const std::stri
 	return true;
 }
 
+static
+bool TemplateCreateTask(const std::string &type, const std::string &template_basic_directory, const std::string &template_vcpkg_directory, Task &task)
+{
+	std::function<bool()> fn = [type, template_basic_directory, template_vcpkg_directory]() {
+		std::string project_name = type;
+		RunCmdSync("mkdir", { "mkdir", project_name }); // TODO. should use project name
+		RunCmdSync("cd && git", { "cd", project_name, "&&", "git", "init", "&&", "git", "remote", "add", "origin", "https://github.com/Civitasv/cake", "&&", "git", "config", "core.sparseCheckout", "true", "&&", "echo", "template/basic", ".git/info/sparse-checkout", "&&", "git", "pull", "origin", "main" });
+
+		return true;
+	};
+
+	task = Task(fn);
+	return true;
+}
+
 void CakeBuild(const BuildConfig &config)
 {
 	std::stringstream cmd;
@@ -251,7 +266,6 @@ void CakeRun(const BuildConfig &build_config, const RunConfig &run_config)
 	tasks.Execute();
 }
 
-
 void CakeInstall(const InstallConfig &install_config)
 {
 	std::stringstream cmd;
@@ -266,6 +280,22 @@ void CakeInstall(const InstallConfig &install_config)
 
 	tasks.Execute();
 }
+
+void CakeCreate(const CreateConfig &create_config)
+{
+	std::stringstream cmd;
+	Tasks tasks;
+
+	Task task;
+	// install task
+	if (TemplateCreateTask(create_config.type, create_config.template_basic_directory, create_config.template_vcpkg_directory, task))
+	{
+		tasks.AddTask(task);
+	}
+
+	tasks.Execute();
+}
+
 int main(int argc, char **argv)
 {
 	if (argc == 1) { // then it is `cake` itself
@@ -362,6 +392,30 @@ int main(int argc, char **argv)
 		}
 
 		CakeInstall(install_config);
+	} else if (strcmp(mode, "create") == 0) {
+		cxxopts::Options options(
+			"cake create",
+			"Create a template");
+		// clang-format off
+		options.add_options()
+		("template", "Specify template type", cxxopts::value<std::string>())
+		// common options
+		("config", "Set configuration value", cxxopts::value<std::vector<std::string>>())
+		("help", "Help");
+		// clang-format on
+
+		auto parse_result = options.parse(argc - 1, argv + 1);
+
+		CreateConfig create_config;
+		if (parse_result.count("help")) {
+			std::cout << options.help() << std::endl;
+			return 0;
+		}
+		if (parse_result.count("template")) {
+			create_config.type = std::move(parse_result["template"].as<std::string>());
+		}
+
+		CakeCreate(create_config);
 	}
 
 	return 0;

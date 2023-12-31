@@ -27,7 +27,8 @@ Including:
   - [x] [cake install](./docs/cake_install.md)
   - `packages/vcpkg_packages` : store the packages installed by vcpkg.
   - `packages/other_packages` : vcpkg\_packages should use `find_package` to link, other\_packages should only use `target_include_directories` and `target_link_libraries` to install.
-- etc.
+- [ ] Create template.
+  - [ ] [cake create](./docs/cake_create.md)
 
 ## Reference
 
