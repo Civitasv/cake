@@ -11,7 +11,7 @@
 
 struct BuildConfig {
 	std::string source_directory = "."; ///< current working directory
-	std::string build_directory = "out/cmake"; ///< where do you want to store the build files
+	std::string build_directory = "out"; ///< where do you want to store the build files
 	bool vcpkg_support = false; ///< if support vcpkg
 	std::string vcpkg_toochain_file = "./packages/vcpkg/scripts/buildsystems/vcpkg.cmake"; ///< vcpkg toolchain file
 	std::string vcpkg_executable_file = "./packages/vcpkg/vcpkg"; /// vcpkg executable file

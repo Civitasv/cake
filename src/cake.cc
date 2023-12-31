@@ -263,31 +263,8 @@ void CakeRun(const BuildConfig &build_config, const RunConfig &run_config)
 	Tasks tasks;
 
 	Task task;
-	// generate query files
-	if (QueryCodeModelTask(build_config.build_directory, task))
-	{
-		tasks.AddTask(task);
-	}
-	// generate task
-	if (CMakeGenerateTask(
-		build_config.source_directory,
-		build_config.build_directory,
-		build_config.vcpkg_support,
-		build_config.vcpkg_toochain_file,
-		build_config.vcpkg_manifest_directory,
-		build_config.vcpkg_packages_directory,
-		build_config.options,
-		task))
-	{
-		tasks.AddTask(task);
-	}
 	// metadata
 	if (CMakeResolveMetaDataTask(build_config.build_directory, task))
-	{
-		tasks.AddTask(task);
-	}
-	// build task
-	if (CMakeBuildTask(build_config.build_directory, build_config.lib, build_config.bin, task))
 	{
 		tasks.AddTask(task);
 	}
@@ -404,7 +381,6 @@ int main(int argc, char **argv)
 		}
 		if (parse_result.count("bin")) {
 			run_config.bin = std::move(parse_result["bin"].as<std::string>());
-			build_config.bin = std::move(parse_result["bin"].as<std::string>()); 
 		}
 		if (parse_result.count("args")) {
 			run_config.args = std::move(parse_result["args"].as<std::vector<std::string>>());
