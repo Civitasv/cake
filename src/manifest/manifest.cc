@@ -23,7 +23,7 @@ BuildConfig ParseBuildConfigFromManifest()
 	config.options.push_back("CMAKE_C_COMPILER:FILEPATH=" + c_compiler);
 
 	std::string cxx_compiler = manifest["profile"]["cxx_compiler"].value_or("g++");
-	config.options.push_back("CMAKE_CXX_COMPILER:FILEPATH=" + c_compiler);
+	config.options.push_back("CMAKE_CXX_COMPILER:FILEPATH=" + cxx_compiler);
 
 	std::string linker = manifest["profile"]["linker"].value_or("ld");
 	config.options.push_back("CMAKE_LINKER=" + linker);
@@ -39,7 +39,7 @@ RunConfig ParseRunConfigFromManifest()
 	Manifest manifest = ParseManifest();
 	RunConfig config;
 
-	config.bin = manifest["package"]["default_run"].value_or("");
+	config.bin = manifest["package"]["default-run"].value_or("");
 
 	return config;
 }

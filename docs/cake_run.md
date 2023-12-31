@@ -18,6 +18,8 @@ Run a binary of the local package.
 
 `--bin` *name*: Run the specified binary.
 
+`--args` args: Arguments passed to binary.
+
 ## ENVIRONMENT
 
 ## EXAMPLES

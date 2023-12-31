@@ -305,6 +305,7 @@ void CakeInstall(const InstallConfig &install_config)
 	if (!install_config.vcpkg_support)
 	{
 		logger->Error("You should open vcpkg support");
+		exit(1);
 	}
 
 	Tasks tasks;

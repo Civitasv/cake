@@ -24,7 +24,7 @@ Install specific library using vcpkg.
 
 `--config` *KEY=VALUE*
 
-All options will send to vcpkg, using `-DKEY=VALUE`.
+All options will send to vcpkg, literally.
 
 `--help`: Prints help information.
 

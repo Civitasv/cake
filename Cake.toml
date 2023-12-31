@@ -9,7 +9,7 @@ default-run = "cake"
 [profile]
 c_compiler = "gcc"
 cxx_compiler = "g++"
-linker = "lld"
+linker = "ld"
 build-type = "Debug" #  "Debug", "Release", "RelWithDebInfo", "MinSizeRel" 
 compile-commands = true
 vcpkg = false
