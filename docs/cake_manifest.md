@@ -20,6 +20,7 @@ Mainly used to replace `cmake-kits` and `cmake-variants` in cmake-tools of vscod
     - `debugger` : The debugger.
     - `vcpkg` : if support vcpkg.
     - `build-type` : The global settings of build type, including "Debug", "Release", "RelWithDebInfo", "MinSizeRel".
+    - `build-directory` : The build directory.
     - `compile-commands` : Whether geneate the compile commands json file.
 
 ## The manifest file for Cake itself

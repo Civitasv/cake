@@ -31,6 +31,9 @@ BuildConfig ParseBuildConfigFromManifest()
 	std::string build_type = manifest["profile"]["build-type"].value_or("Debug");
 	config.options.push_back("CMAKE_BUILD_TYPE=" + build_type);
 
+	std::string build_directory = manifest["profile"]["build-directory"].value_or("out/debug");
+	config.build_directory = build_directory;
+
 	return config;
 }
 
