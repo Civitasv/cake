@@ -169,8 +169,19 @@ bool DebugTargetTask(const std::string &build_directory, const std::string &debu
 			return false;
 		}
 		std::string binpath = build_directory + "/" + meta.bins[bin]["artifacts"][0]["path"].template get<std::string>();
-		
-		std::vector<std::string> args{ debugger, "--args", binpath };
+
+		std::vector<std::string> args;
+		if (debugger == "gdb")
+		{
+			args.push_back(debugger);
+			args.push_back("--args");
+			args.push_back(binpath);
+		} else if (debugger == "lldb")
+		{
+			args.push_back(debugger);
+			args.push_back("--");
+			args.push_back(binpath);
+		}
 		for (auto &arg: bin_args) {
 			args.push_back(arg);
 		}

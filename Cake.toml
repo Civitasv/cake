@@ -7,10 +7,10 @@ license = "MIT"
 default-run = "cake"
 
 [profile]
-c_compiler = "gcc"
-cxx_compiler = "g++"
-linker = "ld"
-debugger = "gdb"
+c_compiler = "clang"
+cxx_compiler = "clang++"
+linker = "lld"
+debugger = "lldb"
 build-type = "Debug" #  "Debug", "Release", "RelWithDebInfo", "MinSizeRel" 
 compile-commands = true
 vcpkg = false
