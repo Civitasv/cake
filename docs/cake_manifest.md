@@ -13,20 +13,13 @@ Mainly used to replace `cmake-kits` and `cmake-variants` in cmake-tools of vscod
     - `description` : A description of the package.
     - `license` : The license of the package.
     - `default-run` : Specift the default binary picked by `cake run`.
-- `[[lib]]` : Library target settings.
-    - `name` : The name of the library.
-    - `build-type` : The build type of the library.
-    - `linkage` : Either `static` or `shared`.
-- `[[bin]]` : Binary target settings.
-    - `name` : The name of the binary.
-    - `build-type` : The build type of the binary.
-    - `args` : The arguments passed to the binary.
 - `[profile]` : Compiler settings and optimizations.
-    - `compiler` : The compiler.
+    - `c_compiler` : The compiler for C.
+    - `cxx_compiler` : The compiler for C++.
     - `linker` : The linker.
-    - `build-type` : The global settings of build type, will be overrided by `[[lib]]` and `[[bin]]`.
-    - `linkage` : The global settings of linkage, either `static` or `shared`, will be overrided by `[[lib]]`.
-    - `compile_commands` : Whether geneate the compile commands json file.
+    - `vcpkg` : if support vcpkg.
+    - `build-type` : The global settings of build type, including "Debug", "Release", "RelWithDebInfo", "MinSizeRel".
+    - `compile-commands` : Whether geneate the compile commands json file.
 
 ## The manifest file for Cake itself
 
@@ -38,12 +31,6 @@ authors = "Civitasv"
 description = "Cake, CMake without a mess"
 license = "MIT"
 default-run = "cake"
-
-[[lib]]
-
-[[bin]]
-name = "cake"
-build-type = "release"
 
 [profile]
 compiler = "g++"

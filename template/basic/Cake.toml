@@ -1,0 +1,19 @@
+[package]
+name = "basic_template"
+version = "0.0.1"
+authors = "Civitasv"
+description = "Basic template for Cake(without vcpkg support)"
+license = "MIT"
+default-run = "basic"
+
+[[lib]]
+
+[[bin]]
+name = "basic"
+build-type = "release"
+
+[profile]
+vcpkg = false
+compiler = "g++"
+linker = "lld"
+compile_commands = true

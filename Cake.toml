@@ -6,14 +6,10 @@ description = "Cake, CMake without a mess"
 license = "MIT"
 default-run = "cake"
 
-[[lib]]
-
-[[bin]]
-name = "cake"
-build-type = "release"
-
 [profile]
-compiler = "g++"
+c_compiler = "gcc"
+cxx_compiler = "g++"
 linker = "lld"
-compile_commands = true
-
+build-type = "Debug" #  "Debug", "Release", "RelWithDebInfo", "MinSizeRel" 
+compile-commands = true
+vcpkg = false

@@ -1,0 +1,19 @@
+[package]
+name = "vcpkg_template"
+version = "0.0.1"
+authors = "Civitasv"
+description = "Vcpkg template for Cake(with vcpkg support)"
+license = "MIT"
+default-run = "vcpkg"
+
+[[lib]]
+
+[[bin]]
+name = "vcpkg"
+build-type = "release"
+
+[profile]
+vcpkg = true
+compiler = "g++"
+linker = "lld"
+compile_commands = true

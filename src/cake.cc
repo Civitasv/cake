@@ -1,5 +1,6 @@
 #include "cake.h"
 
+#include "manifest/manifest.h"
 #include <iostream>
 #include <ostream>
 #include <sstream>
@@ -34,6 +35,7 @@ static
 bool CMakeGenerateTask(
 	const std::string &source_directory,
 	const std::string &build_directory,
+	bool vcpkg_support,
 	const std::string &vcpkg_toolchain_file,
 	const std::string &vcpkg_manifest_directory,
 	const std::string &vcpkg_packages_directory,
@@ -41,16 +43,18 @@ bool CMakeGenerateTask(
 	Task &task
 )
 {
-	std::function<bool()> fn = [source_directory, build_directory, vcpkg_toolchain_file, vcpkg_manifest_directory, vcpkg_packages_directory, options]() {
-		std::vector<std::string> args{
+	std::function<bool()> fn = [source_directory, build_directory, vcpkg_support, vcpkg_toolchain_file, vcpkg_manifest_directory, vcpkg_packages_directory, options]() {
+		std::vector<std::string> args {
 			CMAKE_COMMAND,
 			"-S", source_directory,
-			"-B", build_directory,
-			"-DCMAKE_TOOLCHAIN_FILE=" + vcpkg_toolchain_file,
-			"-DVCPKG_MANIFEST_DIR=" + vcpkg_manifest_directory,
-			"-DVCPKG_INSTALLED_DIR=" + vcpkg_packages_directory,
-			"-DVCPKG_MANIFEST_INSTALL=OFF", // don't automatically install dependencies
+			"-B", build_directory
 		};
+		if (vcpkg_support) {
+			args.push_back("-DCMAKE_TOOLCHAIN_FILE=" + vcpkg_toolchain_file);
+			args.push_back("-DVCPKG_MANIFEST_DIR=" + vcpkg_manifest_directory);
+			args.push_back("-DVCPKG_INSTALLED_DIR=" + vcpkg_packages_directory);
+			args.push_back("-DVCPKG_MANIFEST_INSTALL=OFF"); // don't automatically install dependencies
+		}
 		for (const std::string &option : options) {
 			args.push_back("-D" + option);
 		}
@@ -133,9 +137,9 @@ bool CMakeBuildTask(
 }
 
 static
-bool RunTargetTask(const std::string &build_directory, const std::string &bin, Task &task)
+bool RunTargetTask(const std::string &build_directory, const std::string &bin, const std::vector<std::string> &bin_args, Task &task)
 {
-	std::function<bool()> fn = [build_directory, bin]() {
+	std::function<bool()> fn = [build_directory, bin, bin_args]() {
 		if (meta.bins.count(bin) == 0)
 		{
 			logger->Error(bin, " is not avaliable, the avaliable binaries are: [", meta.Bins(), "]");
@@ -144,6 +148,9 @@ bool RunTargetTask(const std::string &build_directory, const std::string &bin, T
 		std::string binpath = build_directory + "/" + meta.bins[bin]["artifacts"][0]["path"].template get<std::string>();
 		
 		std::vector<std::string> args{ binpath };
+		for (auto &arg: bin_args) {
+			args.push_back(arg);
+		}
 		RunCmdSync(binpath, args);
 		return true;
 	};
@@ -153,16 +160,26 @@ bool RunTargetTask(const std::string &build_directory, const std::string &bin, T
 }
 
 static
-bool VcpkgInstallLibraryTask(const std::string &port, bool sync, const std::string &vcpkg_manifest_directory, const std::string &vcpkg_packages_directory, Task &task)
+bool VcpkgInstallLibraryTask(const std::string &port, bool sync, const std::vector<std::string> &options, const std::string &vcpkg_manifest_directory, const std::string &vcpkg_packages_directory, Task &task)
 {
-	std::function<bool()> fn = [port, sync, vcpkg_manifest_directory, vcpkg_packages_directory]() {
+	std::function<bool()> fn = [port, sync, options, vcpkg_manifest_directory, vcpkg_packages_directory]() {
 		std::string vcpkg_path = "./packages/vcpkg/vcpkg";
 		
 		if (sync)
 		{
-			RunCmdSync(vcpkg_path, { vcpkg_path, "install", "--x-manifest-root=" + vcpkg_manifest_directory, "--x-install-root=" + vcpkg_packages_directory});
+			std::vector<std::string> args = { vcpkg_path, "install", "--x-manifest-root=" + vcpkg_manifest_directory, "--x-install-root=" + vcpkg_packages_directory };
+			for (auto &option: options)
+			{
+				args.push_back(option);
+			}
+			RunCmdSync(vcpkg_path, args);
 		} else {
-			RunCmdSync(vcpkg_path, { vcpkg_path, "add", "port", port, "--x-manifest-root=" + vcpkg_manifest_directory });
+			std::vector<std::string> args = { vcpkg_path, "add", "port", port, "--x-manifest-root=" + vcpkg_manifest_directory };
+			for (auto &option: options)
+			{
+				args.push_back(option);
+			}
+			RunCmdSync(vcpkg_path, args);
 		}
 
 		return true;
@@ -206,7 +223,6 @@ bool TemplateCreateTask(const std::string &type, const std::string &name, const 
 
 void CakeBuild(const BuildConfig &config)
 {
-	std::stringstream cmd;
 	Tasks tasks;
 
 	Task task;
@@ -219,6 +235,7 @@ void CakeBuild(const BuildConfig &config)
 	if (CMakeGenerateTask(
 		config.source_directory,
 		config.build_directory,
+		config.vcpkg_support,
 		config.vcpkg_toochain_file,
 		config.vcpkg_manifest_directory,
 		config.vcpkg_packages_directory,
@@ -243,7 +260,6 @@ void CakeBuild(const BuildConfig &config)
 
 void CakeRun(const BuildConfig &build_config, const RunConfig &run_config)
 {
-	std::stringstream cmd;
 	Tasks tasks;
 
 	Task task;
@@ -256,6 +272,7 @@ void CakeRun(const BuildConfig &build_config, const RunConfig &run_config)
 	if (CMakeGenerateTask(
 		build_config.source_directory,
 		build_config.build_directory,
+		build_config.vcpkg_support,
 		build_config.vcpkg_toochain_file,
 		build_config.vcpkg_manifest_directory,
 		build_config.vcpkg_packages_directory,
@@ -275,7 +292,7 @@ void CakeRun(const BuildConfig &build_config, const RunConfig &run_config)
 		tasks.AddTask(task);
 	}
 	// run task
-	if (RunTargetTask(build_config.build_directory, run_config.bin, task))
+	if (RunTargetTask(build_config.build_directory, run_config.bin, run_config.args, task))
 	{
 		tasks.AddTask(task);
 	}
@@ -285,12 +302,16 @@ void CakeRun(const BuildConfig &build_config, const RunConfig &run_config)
 
 void CakeInstall(const InstallConfig &install_config)
 {
-	std::stringstream cmd;
+	if (!install_config.vcpkg_support)
+	{
+		logger->Error("You should open vcpkg support");
+	}
+
 	Tasks tasks;
 
 	Task task;
 	// install task
-	if (VcpkgInstallLibraryTask(install_config.port, install_config.sync, install_config.vcpkg_manifest_directory, install_config.vcpkg_packages_directory, task))
+	if (VcpkgInstallLibraryTask(install_config.port, install_config.sync, install_config.options, install_config.vcpkg_manifest_directory, install_config.vcpkg_packages_directory, task))
 	{
 		tasks.AddTask(task);
 	}
@@ -334,13 +355,14 @@ int main(int argc, char **argv)
 		("lib", "Build the package's library", cxxopts::value<std::string>())
 		("bin", "Build the specified binary", cxxopts::value<std::vector<std::string>>())
 		// common options
+		("vcpkg", "Whether support vcpkg", cxxopts::value<bool>())
 		("config", "Set configuration value", cxxopts::value<std::vector<std::string>>())
 		("help", "Help");
 		// clang-format on
 
 		auto parse_result = options.parse(argc - 1, argv + 1);
 
-		BuildConfig config;
+		BuildConfig config = ParseBuildConfigFromManifest();
 		if (parse_result.count("help")) {
 			std::cout << options.help() << std::endl;
 			return 0;
@@ -354,6 +376,9 @@ int main(int argc, char **argv)
 		if (parse_result.count("bin")) {
 			config.bin = std::move(parse_result["bin"].as<std::string>());
 		}
+		if (parse_result.count("vcpkg")) {
+			config.vcpkg_support = parse_result["vcpkg"].as<bool>();
+		}
 
 		CakeBuild(config);
 	} else if (strcmp(mode, "run") == 0) {
@@ -364,13 +389,14 @@ int main(int argc, char **argv)
 		options.add_options()
 		// target selection options
 		("bin", "Run the specified binary", cxxopts::value<std::string>())
+		("args", "Args passed to binary", cxxopts::value<std::vector<std::string>>())
 		("help", "Help");
 		// clang-format on
 
 		auto parse_result = options.parse(argc - 1, argv + 1);
 
-		BuildConfig build_config;
-		RunConfig run_config;
+		BuildConfig build_config = ParseBuildConfigFromManifest();
+		RunConfig run_config = ParseRunConfigFromManifest();
 		if (parse_result.count("help")) {
 			std::cout << options.help() << std::endl;
 			return 0;
@@ -378,6 +404,9 @@ int main(int argc, char **argv)
 		if (parse_result.count("bin")) {
 			run_config.bin = std::move(parse_result["bin"].as<std::string>());
 			build_config.bin = std::move(parse_result["bin"].as<std::string>()); 
+		}
+		if (parse_result.count("args")) {
+			run_config.args = std::move(parse_result["args"].as<std::vector<std::string>>());
 		}
 
 		CakeRun(build_config, run_config);
@@ -396,7 +425,7 @@ int main(int argc, char **argv)
 
 		auto parse_result = options.parse(argc - 1, argv + 1);
 
-		InstallConfig install_config;
+		InstallConfig install_config = ParseInstallConfigFromManifest();
 		if (parse_result.count("help")) {
 			std::cout << options.help() << std::endl;
 			return 0;
@@ -406,6 +435,9 @@ int main(int argc, char **argv)
 		}
 		if (parse_result.count("sync")) {
 			install_config.sync = true;
+		}
+		if (parse_result.count("config")) {
+			install_config.options = std::move(parse_result["config"].as<std::vector<std::string>>());
 		}
 
 		CakeInstall(install_config);
