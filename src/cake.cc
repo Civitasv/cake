@@ -49,7 +49,7 @@ bool CMakeGenerateTask(
 			"-DCMAKE_TOOLCHAIN_FILE=" + vcpkg_toolchain_file,
 			"-DVCPKG_MANIFEST_DIR=" + vcpkg_manifest_directory,
 			"-DVCPKG_INSTALLED_DIR=" + vcpkg_packages_directory,
-			"-DVCPKG_MANIFEST_INSTALL=OFF" // don't automatically install dependencies
+			"-DVCPKG_MANIFEST_INSTALL=OFF", // don't automatically install dependencies
 		};
 		for (const std::string &option : options) {
 			args.push_back("-D" + option);
@@ -153,13 +153,17 @@ bool RunTargetTask(const std::string &build_directory, const std::string &bin, T
 }
 
 static
-bool VcpkgInstallLibraryTask(const std::string &library, const std::string &vcpkg_manifest_directory, const std::string &vcpkg_packages_directory, Task &task)
+bool VcpkgInstallLibraryTask(const std::string &port, bool sync, const std::string &vcpkg_manifest_directory, const std::string &vcpkg_packages_directory, Task &task)
 {
-	std::function<bool()> fn = [library, vcpkg_manifest_directory, vcpkg_packages_directory]() {
+	std::function<bool()> fn = [port, sync, vcpkg_manifest_directory, vcpkg_packages_directory]() {
 		std::string vcpkg_path = "./packages/vcpkg/vcpkg";
 		
-		RunCmdSync(vcpkg_path, { vcpkg_path, "add", "port", library, "--x-manifest-root=" + vcpkg_manifest_directory });
-		RunCmdSync(vcpkg_path, { vcpkg_path, "install", "--x-manifest-root=" + vcpkg_manifest_directory, "--x-install-root=" + vcpkg_packages_directory});
+		if (sync)
+		{
+			RunCmdSync(vcpkg_path, { vcpkg_path, "install", "--x-manifest-root=" + vcpkg_manifest_directory, "--x-install-root=" + vcpkg_packages_directory});
+		} else {
+			RunCmdSync(vcpkg_path, { vcpkg_path, "add", "port", port, "--x-manifest-root=" + vcpkg_manifest_directory });
+		}
 
 		return true;
 	};
@@ -255,7 +259,7 @@ void CakeInstall(const InstallConfig &install_config)
 
 	Task task;
 	// install task
-	if (VcpkgInstallLibraryTask(install_config.library, install_config.vcpkg_manifest_directory, install_config.vcpkg_packages_directory, task))
+	if (VcpkgInstallLibraryTask(install_config.port, install_config.sync, install_config.vcpkg_manifest_directory, install_config.vcpkg_packages_directory, task))
 	{
 		tasks.AddTask(task);
 	}
@@ -336,7 +340,8 @@ int main(int argc, char **argv)
 			"Install a library using vcpkg.");
 		// clang-format off
 		options.add_options()
-		("library", "Install the specified library", cxxopts::value<std::string>())
+		("port", "Add port to vcpkg.json", cxxopts::value<std::string>())
+		("sync", "Install all libraries in vcpkg.json")
 		// common options
 		("config", "Set configuration value", cxxopts::value<std::vector<std::string>>())
 		("help", "Help");
@@ -349,8 +354,11 @@ int main(int argc, char **argv)
 			std::cout << options.help() << std::endl;
 			return 0;
 		}
-		if (parse_result.count("library")) {
-			install_config.library = std::move(parse_result["library"].as<std::string>());
+		if (parse_result.count("port")) {
+			install_config.port = std::move(parse_result["port"].as<std::string>());
+		}
+		if (parse_result.count("sync")) {
+			install_config.sync = true;
 		}
 
 		CakeInstall(install_config);

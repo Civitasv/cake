@@ -27,7 +27,8 @@ struct RunConfig {
 };
 
 struct InstallConfig {
-	std::string library; ///< which library to install.
+	std::string port; ///< which library to install.
+	bool sync; ///< install all libraries in vcpkg.json.
 	std::vector<std::string> options; /// install options passed to the vcpkg.
 	std::string vcpkg_manifest_directory = "./packages/"; ///< vcpkg manifest file
 	std::string vcpkg_packages_directory = "./packages/vcpkg_packages"; ///< vcpkg manifest file

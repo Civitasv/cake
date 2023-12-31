@@ -16,7 +16,9 @@ Install specific library using vcpkg.
 
 ### Library Selection
 
-`--package`: Install the specified library.
+`--port <library>` : Add specific library to vcpkg.json.
+
+`--sync` : Install all libraries in vcpkg.json.
 
 ### Common Options
 

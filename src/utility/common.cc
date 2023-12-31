@@ -118,7 +118,6 @@ bool RunCmdSync(const std::string &cmd, const std::vector<std::string> &args)
 	}
 
 	// wating for child process
-	logger->Debug("Waiting for child process to end.");
 	pid_wait(c_pid);
 
 	return true;
