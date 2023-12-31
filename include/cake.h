@@ -35,6 +35,7 @@ struct InstallConfig {
 };
 
 struct CreateConfig {
+	std::string name; ///< which name to create.
 	std::string type; ///< which template to create.
 	std::vector<std::string> options; /// create options passed to the cake.
 	

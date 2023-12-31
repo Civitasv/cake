@@ -173,9 +173,11 @@ bool VcpkgInstallLibraryTask(const std::string &port, bool sync, const std::stri
 }
 
 static
-bool TemplateCreateTask(const std::string &type, const std::string &template_basic_directory, const std::string &template_vcpkg_directory, Task &task)
+bool TemplateCreateTask(const std::string &type, const std::string &name, const std::string &template_basic_directory, const std::string &template_vcpkg_directory, Task &task)
 {
-	std::function<bool()> fn = [type, template_basic_directory, template_vcpkg_directory]() {
+	std::function<bool()> fn = [type, name, template_basic_directory, template_vcpkg_directory]() {
+		std::string project_name = name.empty() ? type : name;
+
 		std::string temp_project_name = "temp_cake";
 		RunCmdSync("mkdir", { "mkdir", temp_project_name });
 		RunCmdSync("git", { "git", "init", temp_project_name });
@@ -183,14 +185,16 @@ bool TemplateCreateTask(const std::string &type, const std::string &template_bas
 		RunCmdSync("git", { "git", "-C", temp_project_name, "config", "core.sparseCheckout", "true" }); 
 		WriteContentToFile("template/" + type, "./" + temp_project_name + "/.git/info/sparse-checkout");
 		RunCmdSync("git", { "git", "-C", temp_project_name, "pull", "origin", "main" });
-		RunCmdSync("mv", { "mv", temp_project_name + "/template/" + type, "." });
+
+		RunCmdSync("mv", { "mv", temp_project_name + "/template/" + type, "./" + project_name });
 		RunCmdSync("rm", { "rm", "-rf", temp_project_name });
 
-		RunCmdSync("git", { "git", "init", type });
-
+		RunCmdSync("git", { "git", "init", project_name });
 		if (type == "vcpkg")
 		{
-			RunCmdSync("git", { "git", "-C", type, "submodule", "add", "git@github.com:microsoft/vcpkg", "./packages/vcpkg" });
+			RunCmdSync("git", { "git", "-C", project_name, "submodule", "add", "git@github.com:microsoft/vcpkg", "./packages/vcpkg" });
+			RunCmdSync("sh", { "sh", "./" + project_name + "/packages/vcpkg/bootstrap-vcpkg.sh" });
+			RunCmdSync("./" + project_name + "/packages/vcpkg/vcpkg", { "./" + project_name +"/packages/vcpkg/vcpkg", "x-update-baseline", "--add-initial-baseline" });
 		}
 
 		return true;
@@ -301,7 +305,7 @@ void CakeCreate(const CreateConfig &create_config)
 
 	Task task;
 	// install task
-	if (TemplateCreateTask(create_config.type, create_config.template_basic_directory, create_config.template_vcpkg_directory, task))
+	if (TemplateCreateTask(create_config.type, create_config.name, create_config.template_basic_directory, create_config.template_vcpkg_directory, task))
 	{
 		tasks.AddTask(task);
 	}
@@ -412,6 +416,7 @@ int main(int argc, char **argv)
 		// clang-format off
 		options.add_options()
 		("template", "Specify template type", cxxopts::value<std::string>())
+		("name", "Specify project name", cxxopts::value<std::string>())
 		// common options
 		("config", "Set configuration value", cxxopts::value<std::vector<std::string>>())
 		("help", "Help");
@@ -426,6 +431,9 @@ int main(int argc, char **argv)
 		}
 		if (parse_result.count("template")) {
 			create_config.type = std::move(parse_result["template"].as<std::string>());
+		}
+		if (parse_result.count("name")) {
+			create_config.name = std::move(parse_result["name"].as<std::string>());
 		}
 
 		CakeCreate(create_config);
