@@ -44,6 +44,17 @@ RunConfig ParseRunConfigFromManifest()
 	return config;
 }
 
+DebugConfig ParseDebugConfigFromManifest()
+{
+	Manifest manifest = ParseManifest();
+	DebugConfig config;
+
+	config.bin = manifest["package"]["default-run"].value_or("");
+	config.debugger = manifest["profile"]["debugger"].value_or("gdb");
+
+	return config;
+}
+
 InstallConfig ParseInstallConfigFromManifest()
 {
 	Manifest manifest = ParseManifest();

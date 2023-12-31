@@ -160,21 +160,61 @@ bool RunTargetTask(const std::string &build_directory, const std::string &bin, c
 }
 
 static
-bool VcpkgInstallLibraryTask(const std::string &port, bool sync, const std::vector<std::string> &options, const std::string &vcpkg_manifest_directory, const std::string &vcpkg_packages_directory, Task &task)
+bool DebugTargetTask(const std::string &build_directory, const std::string &debugger, const std::string &bin, const std::vector<std::string> &bin_args, Task &task)
+{
+	std::function<bool()> fn = [build_directory, debugger, bin, bin_args]() {
+		if (meta.bins.count(bin) == 0)
+		{
+			logger->Error(bin, " is not avaliable, the avaliable binaries are: [", meta.Bins(), "]");
+			return false;
+		}
+		std::string binpath = build_directory + "/" + meta.bins[bin]["artifacts"][0]["path"].template get<std::string>();
+		
+		std::vector<std::string> args{ debugger, "--args", binpath };
+		for (auto &arg: bin_args) {
+			args.push_back(arg);
+		}
+		RunCmdSync(debugger, args);
+		return true;
+	};
+
+	task = Task(fn);
+	return true;
+}
+
+
+static
+bool VcpkgInstallLibraryTask(const std::string &port,
+							 bool sync,
+							 const std::vector<std::string> &options,
+							 const std::string &vcpkg_manifest_directory,
+							 const std::string &vcpkg_packages_directory,
+							 Task &task)
 {
 	std::function<bool()> fn = [port, sync, options, vcpkg_manifest_directory, vcpkg_packages_directory]() {
 		std::string vcpkg_path = "./packages/vcpkg/vcpkg";
 		
 		if (sync)
 		{
-			std::vector<std::string> args = { vcpkg_path, "install", "--x-manifest-root=" + vcpkg_manifest_directory, "--x-install-root=" + vcpkg_packages_directory };
+			std::vector<std::string> args = {
+				vcpkg_path,
+				"install",
+				"--x-manifest-root=" + vcpkg_manifest_directory,
+				"--x-install-root=" + vcpkg_packages_directory
+			};
 			for (auto &option: options)
 			{
 				args.push_back(option);
 			}
 			RunCmdSync(vcpkg_path, args);
 		} else {
-			std::vector<std::string> args = { vcpkg_path, "add", "port", port, "--x-manifest-root=" + vcpkg_manifest_directory };
+			std::vector<std::string> args = {
+				vcpkg_path,
+				"add",
+				"port",
+				port,
+				"--x-manifest-root=" + vcpkg_manifest_directory
+			};
 			for (auto &option: options)
 			{
 				args.push_back(option);
@@ -277,12 +317,30 @@ void CakeRun(const BuildConfig &build_config, const RunConfig &run_config)
 	tasks.Execute();
 }
 
+void CakeDebug(const BuildConfig &build_config, const DebugConfig &debug_config)
+{
+	Tasks tasks;
+
+	Task task;
+	// metadata
+	if (CMakeResolveMetaDataTask(build_config.build_directory, task))
+	{
+		tasks.AddTask(task);
+	}
+	// debug task
+	if (DebugTargetTask(build_config.build_directory, debug_config.debugger, debug_config.bin, debug_config.args, task))
+	{
+		tasks.AddTask(task);
+	}
+
+	tasks.Execute();
+}
+
 void CakeInstall(const InstallConfig &install_config)
 {
 	if (!install_config.vcpkg_support)
 	{
 		logger->Error("You should open vcpkg support");
-		exit(1);
 	}
 
 	Tasks tasks;
@@ -387,7 +445,39 @@ int main(int argc, char **argv)
 		}
 
 		CakeRun(build_config, run_config);
-	} else if (strcmp(mode, "install") == 0) {
+	} else if (strcmp(mode, "debug") == 0) {
+		cxxopts::Options options(
+			"cake debug",
+			"Debug a binary of the local package.");
+		// clang-format off
+		options.add_options()
+		// target selection options
+		("debugger", "Specify the debugger", cxxopts::value<std::string>())
+		("bin", "Debug the specified binary", cxxopts::value<std::string>())
+		("args", "Args passed to binary", cxxopts::value<std::vector<std::string>>())
+		("help", "Help");
+		// clang-format on
+
+		auto parse_result = options.parse(argc - 1, argv + 1);
+
+		BuildConfig build_config = ParseBuildConfigFromManifest();
+		DebugConfig debug_config = ParseDebugConfigFromManifest();
+		if (parse_result.count("help")) {
+			std::cout << options.help() << std::endl;
+			return 0;
+		}
+		if (parse_result.count("debugger")) {
+			debug_config.debugger = std::move(parse_result["debugger"].as<std::string>());
+		}
+		if (parse_result.count("bin")) {
+			debug_config.bin = std::move(parse_result["bin"].as<std::string>());
+		}
+		if (parse_result.count("args")) {
+			debug_config.args = std::move(parse_result["args"].as<std::vector<std::string>>());
+		}
+
+		CakeDebug(build_config, debug_config);
+	}else if (strcmp(mode, "install") == 0) {
 		cxxopts::Options options(
 			"cake install",
 			"Install a library using vcpkg.");

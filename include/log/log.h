@@ -86,11 +86,13 @@ public:
 	template <typename... T> inline void Error(const T &...msg)
 	{
 		Log(ERROR, msg...);
+		exit(errno);
 	}
 
 	template <typename... T> inline void Fatal(const T &...msg)
 	{
 		Log(FATAL, msg...);
+		exit(errno);
 	}
 
 public:

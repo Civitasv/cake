@@ -21,7 +21,7 @@ Including:
 - [x] Proper build system (with cmake).
   - [x] [cake build](./docs/cake_build.md)
   - [x] [cake run](./docs/cake_run.md)
-  - [ ] [cake manifest support](./docs/cake_manifest.md)
+  - [x] [cake manifest support](./docs/cake_manifest.md)
   - [ ] [cake docs](./docs/cake_docs.md)
 - [x] Proper package management (with vcpkg, manifest mode).
   - [x] [cake install](./docs/cake_install.md)

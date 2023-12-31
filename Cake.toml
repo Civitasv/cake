@@ -10,6 +10,7 @@ default-run = "cake"
 c_compiler = "gcc"
 cxx_compiler = "g++"
 linker = "ld"
+debugger = "gdb"
 build-type = "Debug" #  "Debug", "Release", "RelWithDebInfo", "MinSizeRel" 
 compile-commands = true
 vcpkg = false

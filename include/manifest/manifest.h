@@ -16,4 +16,6 @@ RunConfig ParseRunConfigFromManifest();
 
 InstallConfig ParseInstallConfigFromManifest();
 
+DebugConfig ParseDebugConfigFromManifest();
+
 #endif // CAKE_MANIFEST_H_

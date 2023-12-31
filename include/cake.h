@@ -27,6 +27,12 @@ struct RunConfig {
 	std::vector<std::string> args; ///< run options passed to the binary.
 };
 
+struct DebugConfig {
+	std::string debugger; ///< gdb or lldb
+	std::string bin; ///< which binary to debug.
+	std::vector<std::string> args; ///< debug options passed to the binary.
+};
+
 struct InstallConfig {
 	bool vcpkg_support = false; ///< whether support vcpkg.
 	std::string port; ///< which library to install.
