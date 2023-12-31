@@ -2,21 +2,23 @@
 
 ## NAME
 
-cake-run -- Run the current package
+cake-debug -- Debug the current package
 
 ## SYNOPSIS
 
-`cake run [options]`
+`cake debug [options]`
 
 ## DESCRIPTION
 
-Run a binary of the local package.
+Debug a binary of the local package.
 
 ## OPTIONS
 
 ### Target Selection
 
 `--bin` *name*: Run the specified binary.
+
+`--debugger` *name*: Specify debugger, support "gdb", "lldb" or "code"
 
 `--args` args: Arguments passed to binary.
 

@@ -17,7 +17,7 @@ Mainly used to replace `cmake-kits` and `cmake-variants` in cmake-tools of vscod
     - `c_compiler` : The compiler for C.
     - `cxx_compiler` : The compiler for C++.
     - `linker` : The linker.
-    - `debugger` : The debugger.
+    - `debugger` : The debugger, "gdb", "lldb" or "code"
     - `vcpkg` : if support vcpkg.
     - `build-type` : The global settings of build type, including "Debug", "Release", "RelWithDebInfo", "MinSizeRel".
     - `build-directory` : The build directory.

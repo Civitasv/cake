@@ -4,3 +4,4 @@ cake.dSYM
 .Ds_Store
 packages/vcpkg_packages
 packages/other_packages
+generated_docs

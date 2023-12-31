@@ -14,6 +14,10 @@ build-type = "release"
 
 [profile]
 vcpkg = false
-compiler = "g++"
+c_compiler = "clang"
+cxx_compiler = "clang++"
 linker = "lld"
+debugger = "lldb" # "lldb", "gdb", "code"
+build-type = "Debug" # "Debug", "Release", "RelWithDebInfo", "MinSizeRel".
+build-directory = "out/debug"
 compile_commands = true

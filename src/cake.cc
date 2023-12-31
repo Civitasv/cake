@@ -160,9 +160,9 @@ bool RunTargetTask(const std::string &build_directory, const std::string &bin, c
 }
 
 static
-bool DebugTargetTask(const std::string &build_directory, const std::string &debugger, const std::string &bin, const std::vector<std::string> &bin_args, Task &task)
+bool DebugTargetTask(const std::string &source_directory, const std::string &build_directory, const std::string &debugger, const std::string &bin, const std::vector<std::string> &bin_args, Task &task)
 {
-	std::function<bool()> fn = [build_directory, debugger, bin, bin_args]() {
+	std::function<bool()> fn = [source_directory, build_directory, debugger, bin, bin_args]() {
 		if (meta.bins.count(bin) == 0)
 		{
 			logger->Error(bin, " is not avaliable, the avaliable binaries are: [", meta.Bins(), "]");
@@ -176,15 +176,27 @@ bool DebugTargetTask(const std::string &build_directory, const std::string &debu
 			args.push_back(debugger);
 			args.push_back("--args");
 			args.push_back(binpath);
+
+			for (auto &arg: bin_args) {
+				args.push_back(arg);
+			}
 		} else if (debugger == "lldb")
 		{
 			args.push_back(debugger);
 			args.push_back("--");
 			args.push_back(binpath);
+
+			for (auto &arg: bin_args) {
+				args.push_back(arg);
+			}
+		} else if (debugger == "code")
+		{
+			args.push_back("code");
+			args.push_back(source_directory);
+			args.push_back("--profile");
+			args.push_back("Cake");
 		}
-		for (auto &arg: bin_args) {
-			args.push_back(arg);
-		}
+
 		RunCmdSync(debugger, args);
 		return true;
 	};
@@ -192,7 +204,6 @@ bool DebugTargetTask(const std::string &build_directory, const std::string &debu
 	task = Task(fn);
 	return true;
 }
-
 
 static
 bool VcpkgInstallLibraryTask(const std::string &port,
@@ -272,6 +283,18 @@ bool TemplateCreateTask(const std::string &type, const std::string &name, const 
 	return true;
 }
 
+static
+bool DocsCreateTask(Task &task)
+{
+	std::function<bool()> fn = []() {
+		RunCmdSync("doxygen", { "doxygen", "Doxyfile" });
+		return true;
+	};
+
+	task = Task(fn);
+	return true;
+}
+
 void CakeBuild(const BuildConfig &config)
 {
 	Tasks tasks;
@@ -339,7 +362,7 @@ void CakeDebug(const BuildConfig &build_config, const DebugConfig &debug_config)
 		tasks.AddTask(task);
 	}
 	// debug task
-	if (DebugTargetTask(build_config.build_directory, debug_config.debugger, debug_config.bin, debug_config.args, task))
+	if (DebugTargetTask(build_config.source_directory, build_config.build_directory, debug_config.debugger, debug_config.bin, debug_config.args, task))
 	{
 		tasks.AddTask(task);
 	}
@@ -381,12 +404,26 @@ void CakeCreate(const CreateConfig &create_config)
 	tasks.Execute();
 }
 
+void CakeDocs()
+{
+	std::stringstream cmd;
+	Tasks tasks;
+
+	Task task;
+	if (DocsCreateTask(task))
+	{
+		tasks.AddTask(task);
+	}
+
+	tasks.Execute();
+}
+
 int main(int argc, char **argv)
 {
 	if (argc == 1) { // then it is `cake` itself
 		printf("A wrapper for cmake, avaliable commands\n");
 		printf("Usage:\n");
-		printf("  cake [build|run|install|create] [OPTION...]");
+		printf("  cake [build|run|debug|install|create|docs] [OPTION...]");
 		return 0;
 	}
 
@@ -547,6 +584,23 @@ int main(int argc, char **argv)
 		}
 
 		CakeCreate(create_config);
+	} else if (strcmp(mode, "docs") == 0) {
+		cxxopts::Options options(
+			"cake docs",
+			"Create docs");
+		// clang-format off
+		options.add_options()
+		("help", "Help");
+		// clang-format on
+
+		auto parse_result = options.parse(argc - 1, argv + 1);
+
+		if (parse_result.count("help")) {
+			std::cout << options.help() << std::endl;
+			return 0;
+		}
+
+		CakeDocs();
 	}
 
 	return 0;
