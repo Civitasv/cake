@@ -176,9 +176,22 @@ static
 bool TemplateCreateTask(const std::string &type, const std::string &template_basic_directory, const std::string &template_vcpkg_directory, Task &task)
 {
 	std::function<bool()> fn = [type, template_basic_directory, template_vcpkg_directory]() {
-		std::string project_name = type;
-		RunCmdSync("mkdir", { "mkdir", project_name }); // TODO. should use project name
-		RunCmdSync("cd && git", { "cd", project_name, "&&", "git", "init", "&&", "git", "remote", "add", "origin", "https://github.com/Civitasv/cake", "&&", "git", "config", "core.sparseCheckout", "true", "&&", "echo", "template/basic", ".git/info/sparse-checkout", "&&", "git", "pull", "origin", "main" });
+		std::string temp_project_name = "temp_cake";
+		RunCmdSync("mkdir", { "mkdir", temp_project_name });
+		RunCmdSync("git", { "git", "init", temp_project_name });
+		RunCmdSync("git", { "git", "-C", temp_project_name, "remote", "add", "origin", "https://github.com/Civitasv/cake"});
+		RunCmdSync("git", { "git", "-C", temp_project_name, "config", "core.sparseCheckout", "true" }); 
+		WriteContentToFile("template/" + type, "./" + temp_project_name + "/.git/info/sparse-checkout");
+		RunCmdSync("git", { "git", "-C", temp_project_name, "pull", "origin", "main" });
+		RunCmdSync("mv", { "mv", temp_project_name + "/template/" + type, "." });
+		RunCmdSync("rm", { "rm", "-rf", temp_project_name });
+
+		RunCmdSync("git", { "git", "init", type });
+
+		if (type == "vcpkg")
+		{
+			RunCmdSync("git", { "git", "-C", type, "submodule", "add", "git@github.com:microsoft/vcpkg", "./packages/vcpkg" });
+		}
 
 		return true;
 	};
@@ -301,7 +314,7 @@ int main(int argc, char **argv)
 	if (argc == 1) { // then it is `cake` itself
 		printf("A wrapper for cmake, avaliable commands\n");
 		printf("Usage:\n");
-		printf("  cake [build/run] [OPTION...]");
+		printf("  cake [build|run|install|create] [OPTION...]");
 		return 0;
 	}
 

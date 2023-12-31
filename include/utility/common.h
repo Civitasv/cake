@@ -46,4 +46,7 @@ bool MakeDirectory(std::string path);
 /// Make an empty file, if not exists.
 bool MakeFile(std::string path);
 
+/// Write content to file.
+bool WriteContentToFile(const std::string &content, const std::string &file);
+
 #endif // CAKE_HELPER_H_

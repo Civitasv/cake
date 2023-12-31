@@ -156,3 +156,13 @@ bool MakeFile(std::string path) {
 	output.close();
 	return true;
 }
+
+bool WriteContentToFile(const std::string &content, const std::string &file) {
+	logger->Debug("Writing ", content, " to file ", file);
+	std::ofstream output(file);
+
+	output << content;
+
+	output.close();
+	return true;
+}
