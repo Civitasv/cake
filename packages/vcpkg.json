@@ -1,6 +1,7 @@
 {
   "builtin-baseline": "83972272512ce4ede5fc3b2ba98f6468b179f192",
   "dependencies": [
-    "fmt"
+    "fmt",
+    "termcolor"
   ]
 }

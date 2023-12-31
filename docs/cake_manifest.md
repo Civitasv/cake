@@ -2,6 +2,8 @@
 
 The `Cake.toml` file for each package is called its *manifest*.
 
+Mainly used to replace `cmake-kits` and `cmake-variants` in cmake-tools of vscode.
+
 ## The Manifest Format
 
 - `[package]` : Defines a package.

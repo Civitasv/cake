@@ -35,18 +35,21 @@ bool CMakeGenerateTask(
 	const std::string &source_directory,
 	const std::string &build_directory,
 	const std::string &vcpkg_toolchain_file,
-	const std::string &vcpkg_manifest_file,
+	const std::string &vcpkg_manifest_directory,
+	const std::string &vcpkg_packages_directory,
 	const std::vector<std::string> &options,
 	Task &task
 )
 {
-	std::function<bool()> fn = [source_directory, build_directory, vcpkg_toolchain_file, vcpkg_manifest_file, options]() {
+	std::function<bool()> fn = [source_directory, build_directory, vcpkg_toolchain_file, vcpkg_manifest_directory, vcpkg_packages_directory, options]() {
 		std::vector<std::string> args{
 			CMAKE_COMMAND,
 			"-S", source_directory,
 			"-B", build_directory,
 			"-DCMAKE_TOOLCHAIN_FILE=" + vcpkg_toolchain_file,
-			"-DVCPKG_MANIFEST_DIR=" + vcpkg_manifest_file,
+			"-DVCPKG_MANIFEST_DIR=" + vcpkg_manifest_directory,
+			"-DVCPKG_INSTALLED_DIR=" + vcpkg_packages_directory,
+			"-DVCPKG_MANIFEST_INSTALL=OFF" // don't automatically install dependencies
 		};
 		for (const std::string &option : options) {
 			args.push_back("-D" + option);
@@ -149,6 +152,22 @@ bool RunTargetTask(const std::string &build_directory, const std::string &bin, T
 	return true;
 }
 
+static
+bool VcpkgInstallLibraryTask(const std::string &library, const std::string &vcpkg_manifest_directory, const std::string &vcpkg_packages_directory, Task &task)
+{
+	std::function<bool()> fn = [library, vcpkg_manifest_directory, vcpkg_packages_directory]() {
+		std::string vcpkg_path = "./packages/vcpkg/vcpkg";
+		
+		RunCmdSync(vcpkg_path, { vcpkg_path, "add", "port", library, "--x-manifest-root=" + vcpkg_manifest_directory });
+		RunCmdSync(vcpkg_path, { vcpkg_path, "install", "--x-manifest-root=" + vcpkg_manifest_directory, "--x-install-root=" + vcpkg_packages_directory});
+
+		return true;
+	};
+
+	task = Task(fn);
+	return true;
+}
+
 void CakeBuild(const BuildConfig &config)
 {
 	std::stringstream cmd;
@@ -165,7 +184,8 @@ void CakeBuild(const BuildConfig &config)
 		config.source_directory,
 		config.build_directory,
 		config.vcpkg_toochain_file,
-		config.vcpkg_manifest_file,
+		config.vcpkg_manifest_directory,
+		config.vcpkg_packages_directory,
 		config.options,
 		task))
 	{
@@ -201,7 +221,8 @@ void CakeRun(const BuildConfig &build_config, const RunConfig &run_config)
 		build_config.source_directory,
 		build_config.build_directory,
 		build_config.vcpkg_toochain_file,
-		build_config.vcpkg_manifest_file,
+		build_config.vcpkg_manifest_directory,
+		build_config.vcpkg_packages_directory,
 		build_config.options,
 		task))
 	{
@@ -227,6 +248,20 @@ void CakeRun(const BuildConfig &build_config, const RunConfig &run_config)
 }
 
 
+void CakeInstall(const InstallConfig &install_config)
+{
+	std::stringstream cmd;
+	Tasks tasks;
+
+	Task task;
+	// install task
+	if (VcpkgInstallLibraryTask(install_config.library, install_config.vcpkg_manifest_directory, install_config.vcpkg_packages_directory, task))
+	{
+		tasks.AddTask(task);
+	}
+
+	tasks.Execute();
+}
 int main(int argc, char **argv)
 {
 	if (argc == 1) { // then it is `cake` itself
@@ -295,6 +330,30 @@ int main(int argc, char **argv)
 		}
 
 		CakeRun(build_config, run_config);
+	} else if (strcmp(mode, "install") == 0) {
+		cxxopts::Options options(
+			"cake install",
+			"Install a library using vcpkg.");
+		// clang-format off
+		options.add_options()
+		("library", "Install the specified library", cxxopts::value<std::string>())
+		// common options
+		("config", "Set configuration value", cxxopts::value<std::vector<std::string>>())
+		("help", "Help");
+		// clang-format on
+
+		auto parse_result = options.parse(argc - 1, argv + 1);
+
+		InstallConfig install_config;
+		if (parse_result.count("help")) {
+			std::cout << options.help() << std::endl;
+			return 0;
+		}
+		if (parse_result.count("library")) {
+			install_config.library = std::move(parse_result["library"].as<std::string>());
+		}
+
+		CakeInstall(install_config);
 	}
 
 	return 0;

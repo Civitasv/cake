@@ -32,15 +32,13 @@ void pid_wait(pid_t pid)
 	for (;;) {
 		int wstatus = 0;
 		if (waitpid(pid, &wstatus, 0) < 0) {
-			logger->Error("could not wait on command (pid ", pid,
-				      "): ", strerror(errno));
+			logger->Error("could not wait on command (pid ", pid, "): ", strerror(errno));
 		}
 
 		if (WIFEXITED(wstatus)) {
 			int exit_status = WEXITSTATUS(wstatus);
 			if (exit_status != 0) {
-				logger->Error("command exited with exit code ",
-					      exit_status);
+				logger->Error("command exited with exit code ", exit_status);
 			}
 
 			break;
@@ -120,6 +118,7 @@ bool RunCmdSync(const std::string &cmd, const std::vector<std::string> &args)
 	}
 
 	// wating for child process
+	logger->Debug("Waiting for child process to end.");
 	pid_wait(c_pid);
 
 	return true;

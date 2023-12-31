@@ -14,7 +14,8 @@ struct BuildConfig {
 	std::string build_directory = "out/cmake"; ///< where do you want to store the build files
 	std::string vcpkg_toochain_file = "./packages/vcpkg/scripts/buildsystems/vcpkg.cmake"; ///< vcpkg toolchain file
 	std::string vcpkg_executable_file = "./packages/vcpkg/vcpkg"; /// vcpkg executable file
-	std::string vcpkg_manifest_file = "./packages/"; ///< vcpkg manifest file
+	std::string vcpkg_manifest_directory = "./packages/"; ///< vcpkg manifest file
+	std::string vcpkg_packages_directory = "./packages/vcpkg_packages"; ///< vcpkg manifest file
 	std::string lib; ///< which library to build.
 	std::string bin; ///< which binary to build.
 	std::vector<std::string> options; /// build options passed to cake(actually cmake).
@@ -23,6 +24,13 @@ struct BuildConfig {
 struct RunConfig {
 	std::string bin; ///< which binary to run.
 	std::vector<std::string> options; /// run options passed to the binary.
+};
+
+struct InstallConfig {
+	std::string library; ///< which library to install.
+	std::vector<std::string> options; /// install options passed to the vcpkg.
+	std::string vcpkg_manifest_directory = "./packages/"; ///< vcpkg manifest file
+	std::string vcpkg_packages_directory = "./packages/vcpkg_packages"; ///< vcpkg manifest file
 };
 
 struct MetaData {
