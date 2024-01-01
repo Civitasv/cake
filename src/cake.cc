@@ -421,7 +421,7 @@ void CakeDocs()
 int main(int argc, char **argv)
 {
 	if (argc == 1) { // then it is `cake` itself
-		printf("A wrapper for cmake, avaliable commands\n");
+		printf("A wrapper for cmake\n");
 		printf("Usage:\n");
 		printf("  cake [build|run|debug|install|create|docs] [OPTION...]");
 		return 0;
