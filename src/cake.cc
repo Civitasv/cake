@@ -40,10 +40,11 @@ bool CMakeGenerateTask(
 	const std::string &vcpkg_manifest_directory,
 	const std::string &vcpkg_packages_directory,
 	const std::vector<std::string> &options,
+	const std::string &generator,
 	Task &task
 )
 {
-	std::function<bool()> fn = [source_directory, build_directory, vcpkg_support, vcpkg_toolchain_file, vcpkg_manifest_directory, vcpkg_packages_directory, options]() {
+	std::function<bool()> fn = [source_directory, build_directory, vcpkg_support, vcpkg_toolchain_file, vcpkg_manifest_directory, vcpkg_packages_directory, options, generator]() {
 		std::vector<std::string> args {
 			CMAKE_COMMAND,
 			"-S", source_directory,
@@ -58,6 +59,7 @@ bool CMakeGenerateTask(
 		for (const std::string &option : options) {
 			args.push_back("-D" + option);
 		}
+		args.push_back("-G \""+ generator + "\"");
 		RunCmdSync(CMAKE_COMMAND, args);
 		return true;
 	};
@@ -314,6 +316,7 @@ void CakeBuild(const BuildConfig &config)
 		config.vcpkg_manifest_directory,
 		config.vcpkg_packages_directory,
 		config.options,
+		config.generator,
 		task))
 	{
 		tasks.AddTask(task);

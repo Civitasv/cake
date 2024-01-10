@@ -9,6 +9,7 @@ default-run = "cake"
 [profile]
 c_compiler = "clang"
 cxx_compiler = "clang++"
+generator = "Ninja"
 linker = "lld"
 debugger = "lldb" # "gdb", "lldb", "code"
 build-type = "Release" #  "Debug", "Release", "RelWithDebInfo", "MinSizeRel" 

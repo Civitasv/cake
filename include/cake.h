@@ -20,6 +20,7 @@ struct BuildConfig {
 	std::string lib; ///< which library to build.
 	std::string bin; ///< which binary to build.
 	std::vector<std::string> options; ///< build options passed to cake(actually cmake).
+	std::string generator; ///< which generator to use.
 };
 
 struct RunConfig {

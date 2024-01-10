@@ -34,6 +34,9 @@ BuildConfig ParseBuildConfigFromManifest()
 	std::string build_directory = manifest["profile"]["build-directory"].value_or("out/debug");
 	config.build_directory = build_directory;
 
+	std::string generator = manifest["profile"]["generator"].value_or("Ninja");
+	config.generator = generator;
+
 	return config;
 }
 
