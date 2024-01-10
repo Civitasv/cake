@@ -1,13 +1,13 @@
 [package]
-name = "vcpkg_template"
+name = "CXX 20 module"
 version = "0.0.1"
 authors = "Civitasv"
-description = "Vcpkg template for Cake(with vcpkg support)"
+description = "Module template for Cake(without vcpkg support)"
 license = "MIT"
-default-run = "vcpkg"
+default-run = "TheModule"
 
 [profile]
-vcpkg = true
+vcpkg = false
 c_compiler = "clang"
 cxx_compiler = "clang++"
 generator = "Ninja"

@@ -18,11 +18,13 @@ Create a template.
 
 `--template <type>` : Create specific type of template using cake.
 
+`--name <name>` : The name of the project.
+
+- basic: the basic template
+- vcpkg: the vcpkg template
+- module: the module template (CXX20)
+
 ### Common Options
-
-`--config` *KEY=VALUE*
-
-All options will send to cake, using `-DKEY=VALUE`.
 
 `--help`: Prints help information.
 

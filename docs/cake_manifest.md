@@ -16,6 +16,7 @@ Mainly used to replace `cmake-kits` and `cmake-variants` in cmake-tools of vscod
 - `[profile]` : Compiler settings and optimizations.
     - `c_compiler` : The compiler for C.
     - `cxx_compiler` : The compiler for C++.
+    - `generator` : The generator for build.
     - `linker` : The linker.
     - `debugger` : The debugger, "gdb", "lldb" or "code"
     - `vcpkg` : if support vcpkg.

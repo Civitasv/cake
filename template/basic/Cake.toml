@@ -6,16 +6,11 @@ description = "Basic template for Cake(without vcpkg support)"
 license = "MIT"
 default-run = "basic"
 
-[[lib]]
-
-[[bin]]
-name = "basic"
-build-type = "release"
-
 [profile]
 vcpkg = false
 c_compiler = "clang"
 cxx_compiler = "clang++"
+generator = "Ninja"
 linker = "lld"
 debugger = "lldb" # "lldb", "gdb", "code"
 build-type = "Debug" # "Debug", "Release", "RelWithDebInfo", "MinSizeRel".
