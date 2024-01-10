@@ -59,7 +59,7 @@ bool CMakeGenerateTask(
 		for (const std::string &option : options) {
 			args.push_back("-D" + option);
 		}
-		args.push_back("-G \""+ generator + "\"");
+		args.push_back("-G "+ generator);
 		RunCmdSync(CMAKE_COMMAND, args);
 		return true;
 	};
