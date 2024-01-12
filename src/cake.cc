@@ -444,7 +444,7 @@ int main(int argc, char **argv)
 		// common options
 		("vcpkg", "Whether support vcpkg", cxxopts::value<bool>())
 		("config", "Set configuration value", cxxopts::value<std::vector<std::string>>())
-		("help", "Help");
+		("help", "Print help information");
 		// clang-format on
 
 		auto parse_result = options.parse(argc - 1, argv + 1);
@@ -477,7 +477,7 @@ int main(int argc, char **argv)
 		// target selection options
 		("bin", "Run the specified binary", cxxopts::value<std::string>())
 		("args", "Args passed to binary", cxxopts::value<std::vector<std::string>>())
-		("help", "Help");
+		("help", "Print help information");
 		// clang-format on
 
 		auto parse_result = options.parse(argc - 1, argv + 1);
@@ -506,7 +506,7 @@ int main(int argc, char **argv)
 		("debugger", "Specify the debugger", cxxopts::value<std::string>())
 		("bin", "Debug the specified binary", cxxopts::value<std::string>())
 		("args", "Args passed to binary", cxxopts::value<std::vector<std::string>>())
-		("help", "Help");
+		("help", "Print help information");
 		// clang-format on
 
 		auto parse_result = options.parse(argc - 1, argv + 1);
@@ -538,7 +538,7 @@ int main(int argc, char **argv)
 		("sync", "Install all libraries in vcpkg.json")
 		// common options
 		("config", "Set configuration value", cxxopts::value<std::vector<std::string>>())
-		("help", "Help");
+		("help", "Print help information");
 		// clang-format on
 
 		auto parse_result = options.parse(argc - 1, argv + 1);
@@ -569,7 +569,7 @@ int main(int argc, char **argv)
 		("name", "Specify project name", cxxopts::value<std::string>())
 		// common options
 		("config", "Set configuration value", cxxopts::value<std::vector<std::string>>())
-		("help", "Help");
+		("help", "Print help information");
 		// clang-format on
 
 		auto parse_result = options.parse(argc - 1, argv + 1);
@@ -593,7 +593,7 @@ int main(int argc, char **argv)
 			"Create docs");
 		// clang-format off
 		options.add_options()
-		("help", "Help");
+		("help", "Print help information");
 		// clang-format on
 
 		auto parse_result = options.parse(argc - 1, argv + 1);

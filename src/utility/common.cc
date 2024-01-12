@@ -91,6 +91,7 @@ void Tasks::Execute()
 }
 
 ////////////////////// Others /////////////////////////////////
+
 bool RunCmdSync(const std::string &cmd, const std::vector<std::string> &args)
 {
 	logger->Debug("Executing ", '"', args, '"');
