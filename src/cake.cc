@@ -88,7 +88,7 @@ bool CMakeResolveMetaDataTask(const std::string &build_directory, Task &task)
 
 		return true;
 	};
-	
+
 	task = Task(fn);
 	return true;
 }
@@ -127,7 +127,7 @@ bool CMakeBuildTask(
 			args.push_back("--target");
 			args.push_back("all");
 		}
-		
+
 		RunCmdSync(CMAKE_COMMAND, args);
 
 		return true;
@@ -148,7 +148,7 @@ bool RunTargetTask(const std::string &build_directory, const std::string &bin, c
 			return false;
 		}
 		std::string binpath = build_directory + "/" + meta.bins[bin]["artifacts"][0]["path"].template get<std::string>();
-		
+
 		std::vector<std::string> args{ binpath };
 		for (auto &arg: bin_args) {
 			args.push_back(arg);
@@ -217,7 +217,7 @@ bool VcpkgInstallLibraryTask(const std::string &port,
 {
 	std::function<bool()> fn = [port, sync, options, vcpkg_manifest_directory, vcpkg_packages_directory]() {
 		std::string vcpkg_path = "./packages/vcpkg/vcpkg";
-		
+
 		if (sync)
 		{
 			std::vector<std::string> args = {
@@ -263,7 +263,7 @@ bool TemplateCreateTask(const std::string &type, const std::string &name, const 
 		RunCmdSync("mkdir", { "mkdir", temp_project_name });
 		RunCmdSync("git", { "git", "init", temp_project_name });
 		RunCmdSync("git", { "git", "-C", temp_project_name, "remote", "add", "origin", "https://github.com/Civitasv/cake"});
-		RunCmdSync("git", { "git", "-C", temp_project_name, "config", "core.sparseCheckout", "true" }); 
+		RunCmdSync("git", { "git", "-C", temp_project_name, "config", "core.sparseCheckout", "true" });
 		WriteContentToFile("template/" + type, "./" + temp_project_name + "/.git/info/sparse-checkout");
 		RunCmdSync("git", { "git", "-C", temp_project_name, "pull", "origin", "main" });
 

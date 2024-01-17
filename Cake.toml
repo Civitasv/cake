@@ -9,10 +9,10 @@ default-run = "cake"
 [profile]
 c_compiler = "clang"
 cxx_compiler = "clang++"
-generator = "Ninja"
+generator = "Unix Makefiles"
 linker = "lld"
 debugger = "lldb" # "gdb", "lldb", "code"
-build-type = "Release" #  "Debug", "Release", "RelWithDebInfo", "MinSizeRel" 
-build-directory = "out/release"
+build-type = "Debug" #  "Debug", "Release", "RelWithDebInfo", "MinSizeRel"
+build-directory = "out/debug"
 compile-commands = true
 vcpkg = false
