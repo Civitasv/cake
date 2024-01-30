@@ -275,7 +275,7 @@ bool TemplateCreateTask(const std::string &type, const std::string &name, const 
 		{
 			RunCmdSync("git", { "git", "-C", project_name, "submodule", "add", "git@github.com:microsoft/vcpkg", "./packages/vcpkg" });
 			RunCmdSync("sh", { "sh", "./" + project_name + "/packages/vcpkg/bootstrap-vcpkg.sh" });
-			RunCmdSync("./" + project_name + "/packages/vcpkg/vcpkg", { "./" + project_name +"/packages/vcpkg/vcpkg", "x-update-baseline", "--add-initial-baseline" });
+			RunCmdSync("./" + project_name + "/packages/vcpkg/vcpkg", { "./" + project_name +"/packages/vcpkg/vcpkg", "--x-manifest-root=./packages/", "x-update-baseline", "--add-initial-baseline" });
 		}
 
 		return true;
