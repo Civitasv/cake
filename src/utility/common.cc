@@ -167,3 +167,7 @@ bool WriteContentToFile(const std::string &content, const std::string &file) {
 	output.close();
 	return true;
 }
+
+bool FileExists(const std::string& file) {
+  return std::ifstream(file).good();
+}

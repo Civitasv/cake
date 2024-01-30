@@ -49,4 +49,8 @@ bool MakeFile(std::string path);
 /// Write content to file.
 bool WriteContentToFile(const std::string &content, const std::string &file);
 
+/// Whether file exists.
+bool FileExists(const std::string& file);
+
 #endif // CAKE_HELPER_H_
+

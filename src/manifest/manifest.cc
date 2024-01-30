@@ -1,9 +1,12 @@
 #include "manifest/manifest.h"
+#include "utility/common.h"
 #include "utility/toml.hpp"
 #include <string>
 
 Manifest ParseManifest()
 {
+  if (!FileExists(MANIFEST_FILE))
+    return toml::table();
 	return toml::parse_file(MANIFEST_FILE);
 }
 
